@@ -6,12 +6,14 @@ and run: gunicorn -c conf.py
 """
 import os
 
-app_path = os.environ["HOME"] + "/sensor_board"
+# Resolve the app dir without relying on $HOME being present in the supervisord
+# environment (expanduser falls back to the passwd database).
+app_path = os.path.expanduser("~/sensor_board")
 
 chdir = app_path
 bind = ":8020"
 workers = 2
-worker_class = "uvicorn.workers.UvicornWorker"
+worker_class = "uvicorn_worker.UvicornWorker"
 wsgi_app = "app.main:app"
 
 errorlog = app_path + "/errors.log"

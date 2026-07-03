@@ -32,7 +32,7 @@ router = APIRouter()
 
 @router.post(settings.ingest_path)
 async def ingest(request: Request):
-    if request.headers.get("x-api-key") != settings.api_key:
+    if request.headers.get("x-api-key") not in settings.api_keys:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     data = await request.json()

@@ -23,7 +23,15 @@ class Settings:
         self.base_url = _env("BASE_URL", "").rstrip("/")
 
         # Ingestion -----------------------------------------------------
-        self.api_key = _env("API_KEY", "change-me")
+        # Accept one or many keys. API_KEYS (comma-separated) takes precedence;
+        # otherwise fall back to a single API_KEY. Devices send one of these as
+        # the x-api-key header. Multiple keys let you issue a key per workshop /
+        # group and revoke one without disturbing the others.
+        raw_keys = os.getenv("API_KEYS")
+        if raw_keys:
+            self.api_keys = [k.strip() for k in raw_keys.split(",") if k.strip()]
+        else:
+            self.api_keys = [_env("API_KEY", "change-me")]
         # Path devices POST to. Generic by default; override for compat.
         self.ingest_path = _env("INGEST_PATH", "/sensor/measurement")
 
