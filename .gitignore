@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.log
+app/data/*.db
+app/data/*.db-wal
+app/data/*.db-shm
+.idea/
+
+CLAUDE.md

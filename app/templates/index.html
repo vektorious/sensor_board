@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Overview</h1>
+
+  <section>
+    <h2>Stats</h2>
+    <div class="overview-grid">
+      <div class="stat"><div class="stat-label">Devices</div><div class="stat-value">{{ stats.devices }}</div></div>
+      <div class="stat"><div class="stat-label">Measurements</div><div class="stat-value">{{ "{:,}".format(stats.measurements) }}</div></div>
+      <div class="stat"><div class="stat-label">Projects</div><div class="stat-value">{{ stats.projects }}</div></div>
+      <div class="stat"><div class="stat-label">Active Devices (24)</div><div class="stat-value">{{ stats.active_24h }}</div></div>
+      <div class="stat">
+        <div class="stat-label">Last reading</div>
+        <div class="stat-value stat-value--sm">{{ stats.last_seen.strftime('%Y-%m-%d %H:%M') if stats.last_seen else '—' }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Projects</h2>
+    {% if projects %}
+    <div class="card-grid">
+      {% for p in projects %}
+      <a class="card link-card" href="/dashboard/project/{{ p.project }}">
+        <div class="card-title">{{ p.project }}</div>
+        <div class="card-meta">{{ p.device_count }} device{{ '' if p.device_count == 1 else 's' }}</div>
+        <div class="card-meta muted">last seen {{ p.last_seen.strftime('%Y-%m-%d %H:%M UTC') if p.last_seen else '—' }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">No projects yet.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Devices</h2>
+    {% if devices %}
+    <div class="card-grid">
+      {% for d in devices %}
+      <a class="card link-card" href="/dashboard/device/{{ d.device_uuid }}">
+        <div class="card-title">{{ d.device_name or d.device_uuid }}</div>
+        <div class="card-meta mono">{{ d.device_uuid }}</div>
+        {% if d.project %}<div class="card-meta">project: {{ d.project }}</div>{% endif %}
+        <div class="card-meta muted">last seen {{ d.last_seen.strftime('%Y-%m-%d %H:%M UTC') if d.last_seen else '—' }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">No devices have reported data yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

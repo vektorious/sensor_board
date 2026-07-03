@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ slug }} · {{ app_title }}{% endblock %}
+{% block content %}
+  <nav class="crumbs"><a href="/">Overview</a> / <span>{{ slug }}</span></nav>
+
+  <div class="device-head">
+    <h1>Project: {{ slug }}</h1>
+    <div class="range-control" id="range-control" role="group" aria-label="Time range">
+      <button data-hours="24">24h</button>
+      <button data-hours="168" class="active">7d</button>
+      <button data-hours="720">30d</button>
+      <button data-hours="0">All</button>
+    </div>
+  </div>
+
+  <div id="project-charts" class="panel-grid"
+       data-slug="{{ slug }}"
+       data-default-hours="{{ default_range_hours }}">
+    <p class="muted" id="charts-empty">Loading…</p>
+  </div>
+
+  <h2>Devices</h2>
+  {% if devices %}
+  <div class="card-grid">
+    {% for d in devices %}
+    <a class="card link-card" href="/dashboard/device/{{ d.device_uuid }}">
+      <div class="card-title">{{ d.device_name or d.device_uuid }}</div>
+      <div class="card-meta mono">{{ d.device_uuid }}</div>
+      <div class="card-meta muted">last seen {{ d.last_seen.strftime('%Y-%m-%d %H:%M UTC') if d.last_seen else '—' }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">No devices in this project yet.</p>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ echarts_src }}"></script>
+  <script src="/static/js/project.js"></script>
+{% endblock %}

@@ -1,0 +1,44 @@
+"""Runtime configuration, driven entirely by environment variables.
+
+Every deployment-specific value is overridable so the same code can run as a
+plant dashboard, a weather dashboard, or anything else. Copy .env.example to
+.env (or export the vars in the service) and change what you need.
+"""
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def _env(name: str, default: str) -> str:
+    return os.getenv(name, default)
+
+
+class Settings:
+    def __init__(self) -> None:
+        # Branding / public identity ------------------------------------
+        self.app_title = _env("APP_TITLE", "Sensor Board")
+        self.brand = _env("BRAND", self.app_title)
+        # Public base URL (no trailing slash), used to build shareable links.
+        self.base_url = _env("BASE_URL", "").rstrip("/")
+
+        # Ingestion -----------------------------------------------------
+        self.api_key = _env("API_KEY", "change-me")
+        # Path devices POST to. Generic by default; override for compat.
+        self.ingest_path = _env("INGEST_PATH", "/sensor/measurement")
+
+        # Storage -------------------------------------------------------
+        db_path = _env("DB_PATH", str(BASE_DIR / "data" / "sensors.db"))
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        self.db_path = db_path
+        self.database_url = f"sqlite:///{db_path}"
+
+        # Frontend ------------------------------------------------------
+        # Where the ECharts library is served from. Vendored by default so the
+        # app has no external runtime dependency; point at a CDN if you prefer.
+        self.echarts_src = _env("ECHARTS_SRC", "/static/js/echarts.min.js")
+        # Default lookback window for time-series charts, in hours.
+        self.default_range_hours = int(_env("DEFAULT_RANGE_HOURS", "168"))
+
+
+settings = Settings()

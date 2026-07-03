@@ -1,0 +1,144 @@
+/* ============================================================
+   Sensor Board — theme.
+   Everything visual is driven by the CSS custom properties below,
+   so restyling (or per-deployment branding) means editing this block.
+   Palette values are the validated data-viz defaults (light + dark).
+   ============================================================ */
+:root {
+  --surface-0: #f4f4f2;   /* page background */
+  --surface-1: #fcfcfb;   /* cards / chart surface */
+  --border:    #e3e3df;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #8a897f;
+
+  --series-1: #2a78d6;    /* primary chart hue (blue) */
+  --good:     #0ca30c;
+  --warning:  #fab219;
+  --critical: #d03b3b;
+
+  --radius: 12px;
+  --gap: 16px;
+  --maxw: 1100px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border:    #2e2e2b;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #86857b;
+    --series-1: #3987e5;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+a { color: var(--series-1); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+.brand { font-weight: 700; font-size: 1.1rem; color: var(--text-primary); }
+
+.container { max-width: var(--maxw); margin: 0 auto; padding: 24px 20px 64px; }
+
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--text-secondary); font-weight: 600; }
+
+.muted { color: var(--text-muted); }
+.mono  { font-family: var(--mono); font-size: 0.85em; color: var(--text-secondary); }
+
+.crumbs { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
+.crumbs span { color: var(--text-secondary); }
+
+/* --- card grids (overview / project) --- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--gap);
+}
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.link-card { display: block; color: inherit; }
+.link-card:hover { border-color: var(--series-1); text-decoration: none; }
+.card-title { font-weight: 600; margin-bottom: 4px; }
+.card-meta  { font-size: 0.85rem; color: var(--text-secondary); }
+
+/* --- device page --- */
+.device-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.range-control { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.range-control button {
+  border: 0;
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.range-control button + button { border-left: 1px solid var(--border); }
+.range-control button.active { background: var(--series-1); color: #fff; }
+
+/* --- quick overview: last value per sensor --- */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--gap);
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
+.stat-value { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-value--sm { font-size: 0.95rem; font-weight: 600; }
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--gap);
+}
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 8px;
+}
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; }
+.panel-title { font-weight: 600; font-size: 0.95rem; }
+.panel-latest { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 0.9rem; }
+.panel-chart { width: 100%; height: 200px; }
+.panel.gauge .panel-chart { height: 180px; }

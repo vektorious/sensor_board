@@ -1,0 +1,5 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+gunicorn>=22.0
+sqlmodel>=0.0.22
+jinja2>=3.1
