@@ -22,21 +22,30 @@ python3.12 -m venv .venv          # any Python 3.11+ available on the host
 ECharts is vendored in the repo, so there's nothing else to fetch. (If it's ever
 missing: `./scripts/fetch_vendor.sh`.)
 
-## 2. Configure the service
+## 2. Configure
+
+Configuration lives in a `.env` file that the app reads itself (keeping
+comma-containing secrets out of the supervisord file, whose `environment=` line
+splits on commas):
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Set at least:
+- `API_KEYS` — comma-separated keys (e.g. `grp-a,grp-b,admin`). No quotes needed.
+- `ROOT_PATH` — UI prefix (`/dashboard`, or empty for domain root).
+- `BASE_URL` — `https://<your-domain><ROOT_PATH>`.
+- `APP_TITLE` / `BRAND` — optional labels.
+
+`.env` is git-ignored, so secrets never get committed. Then install the service
+file (it carries no secrets — it just runs the app, which loads `.env`):
 
 ```bash
 mkdir -p ~/etc/services.d
 cp deploy/uberspace/sensor_board.ini ~/etc/services.d/sensor_board.ini
-nano ~/etc/services.d/sensor_board.ini    # edit the `environment=` line
 ```
-
-Set in the `environment=` line:
-- `API_KEYS` — your comma-separated keys (e.g. `"grp-a,grp-b,admin"`).
-- `ROOT_PATH` — URL prefix for the UI (`"/dashboard"`, or `""` for domain root).
-- `BASE_URL` — `https://<your-domain><ROOT_PATH>`.
-- `APP_TITLE` / `BRAND` — optional labels.
-
-The keys are the only secrets, and they live only on the server (never committed).
 
 ## 3. Start it
 

@@ -9,6 +9,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
+# Load a .env file from the project root if present, so secrets (API keys with
+# commas, etc.) live in a file the app parses itself — not in the supervisord
+# service file, whose `environment=` line splits on commas. Existing real env
+# vars are NOT overridden.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(BASE_DIR.parent / ".env")
+except ImportError:
+    pass
+
 
 def _env(name: str, default: str) -> str:
     return os.getenv(name, default)
