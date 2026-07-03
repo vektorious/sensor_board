@@ -9,6 +9,7 @@
   if (!root || !overviewEl || typeof echarts === "undefined") return;
 
   var uuid = overviewEl.dataset.uuid;
+  var base = overviewEl.dataset.base || "";   // URL prefix, e.g. "/dashboard"
   var currentHours = parseInt(overviewEl.dataset.defaultHours, 10) || 168;
   var charts = [];   // { key, type, inst, el }
 
@@ -121,7 +122,7 @@
     var t = theme();
     var m = entry.meta;
     entry.inst.showLoading({ text: "", color: t.series, maskColor: "transparent" });
-    fetch("/api/device/" + encodeURIComponent(uuid) +
+    fetch(base + "/api/device/" + encodeURIComponent(uuid) +
           "/series?sensor=" + encodeURIComponent(m.key) + "&hours=" + currentHours)
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -190,7 +191,7 @@
   });
 
   // --- boot ---
-  fetch("/api/device/" + encodeURIComponent(uuid) + "/sensors")
+  fetch(base + "/api/device/" + encodeURIComponent(uuid) + "/sensors")
     .then(function (r) {
       if (!r.ok) throw new Error("not found");
       return r.json();

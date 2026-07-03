@@ -32,10 +32,11 @@ nano ~/etc/services.d/sensor_board.ini    # edit the `environment=` line
 
 Set in the `environment=` line:
 - `API_KEYS` — your comma-separated keys (e.g. `"grp-a,grp-b,admin"`).
-- `BASE_URL` — `https://<your-domain>`.
+- `ROOT_PATH` — URL prefix for the UI (`"/dashboard"`, or `""` for domain root).
+- `BASE_URL` — `https://<your-domain><ROOT_PATH>`.
 - `APP_TITLE` / `BRAND` — optional labels.
 
-These are the only secrets, and they live only on the server (never committed).
+The keys are the only secrets, and they live only on the server (never committed).
 
 ## 3. Start it
 
@@ -50,19 +51,25 @@ with `supervisorctl restart sensor_board`.
 
 ## 4. Route your domain
 
+The UI is mounted under `/dashboard` and ingestion stays at `/sensor`, leaving the
+domain root free. Point **both** paths at the app; Uberspace passes the full path
+through, so two backends on the same port is all it takes:
+
 ```bash
-uberspace web domain add <your-domain>     # then set the DNS records it prints
-uberspace web backend set <your-domain> --http --port 8020
-uberspace web backend list                 # confirm it points at :8020
+uberspace web domain add <your-domain>              # then set the DNS records it prints
+uberspace web backend set <your-domain>/dashboard --http --port 8020
+uberspace web backend set <your-domain>/sensor    --http --port 8020
+uberspace web backend list                          # confirm both point at :8020
 ```
 
 DNS propagation + Let's Encrypt cert issuance happen automatically once the
-records resolve.
+records resolve. (`<your-domain>/` itself stays unrouted — free for a future
+landing page.)
 
 ## 5. Verify
 
 ```bash
-curl -s https://<your-domain>/ | head
+curl -s https://<your-domain>/dashboard/ | head
 # send a test measurement with one of your keys:
 curl -X POST https://<your-domain>/sensor/measurement \
   -H 'x-api-key: <one-of-your-keys>' -H 'content-type: application/json' \
@@ -83,7 +90,8 @@ supervisorctl restart sensor_board
 ## Pointing devices at it
 
 In each device's WiFiManager setup portal set:
-- **API URL** → `https://<your-domain>/sensor/measurement`
+- **API URL** → `https://<your-domain>/sensor/measurement` (ingest is at the
+  root `/sensor` path, not under `/dashboard`)
 - **API Key** → one of your `API_KEYS`
 
 Existing firmware defaults (`DEFAULT_API_URL`) can also be updated to the new

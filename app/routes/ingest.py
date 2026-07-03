@@ -35,7 +35,12 @@ async def ingest(request: Request):
     if request.headers.get("x-api-key") not in settings.api_keys:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    data = await request.json()
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Body must be a JSON object")
     device_uuid = data.get("device_uuid")
     if not device_uuid:
         raise HTTPException(status_code=400, detail="device_uuid is required")

@@ -2,8 +2,8 @@
 {% block title %}{{ (info.device_name if info else device_uuid) }} · {{ app_title }}{% endblock %}
 {% block content %}
   <nav class="crumbs">
-    <a href="/">Overview</a>
-    {% if info and info.project %}/ <a href="/dashboard/project/{{ info.project }}">{{ info.project }}</a>{% endif %}
+    <a href="{{ base_path }}/">Overview</a>
+    {% if info and info.project %}/ <a href="{{ base_path }}/project/{{ info.project }}">{{ info.project }}</a>{% endif %}
     / <span>{{ info.device_name if info else device_uuid }}</span>
   </nav>
 
@@ -23,6 +23,7 @@
 
   <div id="overview" class="overview-grid"
        data-uuid="{{ device_uuid }}"
+       data-base="{{ base_path }}"
        data-default-hours="{{ default_range_hours }}"></div>
 
   <div id="panels" class="panel-grid">
@@ -32,5 +33,5 @@
 
 {% block scripts %}
   <script src="{{ echarts_src }}"></script>
-  <script src="/static/js/dashboard.js"></script>
+  <script src="{{ base_path }}/static/js/dashboard.js"></script>
 {% endblock %}

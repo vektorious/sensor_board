@@ -5,10 +5,14 @@ measurements to one endpoint; the dashboard **auto-populates** — every sensor 
 device reports becomes a panel, with no per-sensor code. Data is grouped into
 **projects** and **devices**, each with its own bookmarkable URL:
 
-- `GET /` — overview of all projects and devices
-- `GET /dashboard/device/{device_uuid}` — one device: latest values + line charts
-- `GET /dashboard/project/{slug}` — one project: per-sensor charts overlaying all
+- `GET {ROOT_PATH}/` — overview of all projects and devices
+- `GET {ROOT_PATH}/device/{device_uuid}` — one device: latest values + line charts
+- `GET {ROOT_PATH}/project/{slug}` — one project: per-sensor charts overlaying all
   its devices, plus the device list
+
+`ROOT_PATH` is empty by default (UI at the domain root, e.g. `/device/{uuid}`);
+set it to `/dashboard` to serve the whole UI under that prefix (e.g.
+`/dashboard/device/{uuid}`). The ingestion endpoint is independent of the prefix.
 
 It's generic: nothing is plant-specific. Point any device that can send JSON at
 it and it just works.
@@ -83,6 +87,7 @@ All optional; sensible defaults apply. See [`.env.example`](.env.example).
 | `APP_TITLE` | `Sensor Board` | Page title |
 | `BRAND` | = `APP_TITLE` | Header brand text |
 | `BASE_URL` | *(empty)* | Public URL, for building shareable links |
+| `ROOT_PATH` | *(empty)* | URL prefix the UI mounts under (e.g. `/dashboard`) |
 | `API_KEY` | `change-me` | Shared secret devices send as `x-api-key` |
 | `INGEST_PATH` | `/sensor/measurement` | Endpoint devices POST to |
 | `DB_PATH` | `app/data/sensors.db` | SQLite file location |

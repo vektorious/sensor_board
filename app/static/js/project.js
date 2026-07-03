@@ -8,6 +8,7 @@
   if (!root || typeof echarts === "undefined") return;
 
   var slug = root.dataset.slug;
+  var base = root.dataset.base || "";   // URL prefix, e.g. "/dashboard"
   var currentHours = parseInt(root.dataset.defaultHours, 10) || 168;
   var charts = [];   // { key, inst, meta }
 
@@ -61,7 +62,7 @@
     var pal = palette();
     var m = entry.meta;
     entry.inst.showLoading({ text: "", maskColor: "transparent" });
-    fetch("/api/project/" + encodeURIComponent(slug) +
+    fetch(base + "/api/project/" + encodeURIComponent(slug) +
           "/series?sensor=" + encodeURIComponent(m.key) + "&hours=" + currentHours)
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -122,7 +123,7 @@
     charts.forEach(function (e) { e.inst.resize(); });
   });
 
-  fetch("/api/project/" + encodeURIComponent(slug) + "/sensors")
+  fetch(base + "/api/project/" + encodeURIComponent(slug) + "/sensors")
     .then(function (r) { return r.json(); })
     .then(function (data) {
       var empty = document.getElementById("charts-empty");

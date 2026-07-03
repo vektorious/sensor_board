@@ -22,6 +22,11 @@ class Settings:
         # Public base URL (no trailing slash), used to build shareable links.
         self.base_url = _env("BASE_URL", "").rstrip("/")
 
+        # Path prefix the dashboard UI is mounted under (no trailing slash).
+        # "" = domain root; "/dashboard" = served under /dashboard/… . The whole
+        # UI (pages, API, static) sits under this; the ingest endpoint does not.
+        self.root_path = _env("ROOT_PATH", "").rstrip("/")
+
         # Ingestion -----------------------------------------------------
         # Accept one or many keys. API_KEYS (comma-separated) takes precedence;
         # otherwise fall back to a single API_KEY. Devices send one of these as
@@ -44,7 +49,9 @@ class Settings:
         # Frontend ------------------------------------------------------
         # Where the ECharts library is served from. Vendored by default so the
         # app has no external runtime dependency; point at a CDN if you prefer.
-        self.echarts_src = _env("ECHARTS_SRC", "/static/js/echarts.min.js")
+        self.echarts_src = _env(
+            "ECHARTS_SRC", f"{self.root_path}/static/js/echarts.min.js"
+        )
         # Default lookback window for time-series charts, in hours.
         self.default_range_hours = int(_env("DEFAULT_RANGE_HOURS", "168"))
 
