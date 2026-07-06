@@ -33,3 +33,9 @@ class Reading(SQLModel, table=True):
     # carries sensors[x].plot = "gauge" | "line" | ..., it lands here and
     # overrides the default chart type. Unused today; harmless when null.
     plot: Optional[str] = Field(default=None)
+
+    # SHA-256 hash of the API key that submitted this measurement. Never the
+    # plaintext key. Used for beta usage attribution and bulk deletion
+    # (DELETE FROM readings WHERE api_key_hash = ?). Temporary — see
+    # docs/future-auth-model.md for the intended long-term model.
+    api_key_hash: Optional[str] = Field(default=None, index=True)

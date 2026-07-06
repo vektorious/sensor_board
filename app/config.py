@@ -50,6 +50,8 @@ class Settings:
             self.api_keys = [_env("API_KEY", "change-me")]
         # Path devices POST to. Generic by default; override for compat.
         self.ingest_path = _env("INGEST_PATH", "/sensor/measurement")
+        # Reject ingest bodies larger than this many bytes (default 50 KB).
+        self.max_payload_bytes = int(_env("MAX_PAYLOAD_BYTES", str(50 * 1024)))
 
         # Storage -------------------------------------------------------
         db_path = _env("DB_PATH", str(BASE_DIR / "data" / "sensors.db"))

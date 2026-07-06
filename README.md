@@ -78,6 +78,44 @@ Then visit http://127.0.0.1:8020/dashboard/device/a1b2c3d4.
 Each sensor entry becomes one row. An optional per-sensor `"plot"` field
 (`"line"`/`"gauge"`) is stored for future use and otherwise ignored.
 
+The endpoint validates the request and returns descriptive JSON errors:
+`401` (missing/invalid `X-API-Key`), `413` (body over `MAX_PAYLOAD_BYTES`, default
+50 KB), and `400` (malformed JSON, missing `device_uuid`, missing/empty `sensors`,
+or a non-numeric sensor value).
+
+## Beta testing
+
+You'll be given an **API key**. Send it in the `X-API-Key` header. Your
+`device_uuid` is **user-defined** — pick any stable string per device (e.g.
+`workbench-sensor-01`); it's what your dashboard URL uses.
+
+```bash
+curl -X POST https://diy-sensor.org/sensor/measurement \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "device_uuid": "workbench-sensor-01",
+    "sensors": {
+      "temperature": 22.4,
+      "humidity": 51
+    }
+  }'
+```
+
+Then view your device at `…/dashboard/device/workbench-sensor-01`.
+
+**Please don't share your API key** — it identifies your submissions. Keys are
+never stored in plaintext; only a SHA-256 hash is kept with each measurement.
+
+*Data deletion (beta):* because each row is tagged with the key's hash, an
+operator can remove all of a tester's data with a single query — a temporary
+measure for the beta (see [`docs/future-auth-model.md`](docs/future-auth-model.md)
+for the intended long-term design):
+
+```sql
+DELETE FROM readings WHERE api_key_hash = '<sha256-of-key>';
+```
+
 ## Configuration (environment variables)
 
 All optional; sensible defaults apply. See [`.env.example`](.env.example).
@@ -90,6 +128,7 @@ All optional; sensible defaults apply. See [`.env.example`](.env.example).
 | `ROOT_PATH` | *(empty)* | URL prefix the UI mounts under (e.g. `/dashboard`) |
 | `API_KEY` | `change-me` | Shared secret devices send as `x-api-key` |
 | `INGEST_PATH` | `/sensor/measurement` | Endpoint devices POST to |
+| `MAX_PAYLOAD_BYTES` | `51200` | Max ingest body size (bytes); larger → 413 |
 | `DB_PATH` | `app/data/sensors.db` | SQLite file location |
 | `ECHARTS_SRC` | `/static/js/echarts.min.js` | Where the chart lib is served from |
 | `DEFAULT_RANGE_HOURS` | `168` | Default chart lookback (7 days) |

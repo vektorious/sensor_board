@@ -43,6 +43,25 @@ Index(
 
 def init_db() -> None:
     SQLModel.metadata.create_all(engine)
+    _migrate()
+
+
+def _migrate() -> None:
+    """Idempotent, dependency-free schema migrations for existing SQLite files.
+
+    create_all() creates missing tables but never alters existing ones, so a DB
+    from before a column was added needs a manual ALTER. Kept tiny on purpose —
+    no Alembic for a beta.
+    """
+    with engine.connect() as conn:
+        cols = [r[1] for r in conn.exec_driver_sql("PRAGMA table_info('readings')").fetchall()]
+        if cols and "api_key_hash" not in cols:
+            conn.exec_driver_sql("ALTER TABLE readings ADD COLUMN api_key_hash VARCHAR")
+            conn.exec_driver_sql(
+                "CREATE INDEX IF NOT EXISTS ix_readings_api_key_hash "
+                "ON readings (api_key_hash)"
+            )
+            conn.commit()
 
 
 def get_session() -> Session:

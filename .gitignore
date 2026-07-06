@@ -10,3 +10,6 @@ app/data/*.db-shm
 .idea/
 
 CLAUDE.md
+
+# Internal design notes — not for publication
+docs/future-auth-model.md
