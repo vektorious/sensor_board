@@ -116,6 +116,23 @@ for the intended long-term design):
 DELETE FROM readings WHERE api_key_hash = '<sha256-of-key>';
 ```
 
+## Retention (automatic cleanup)
+
+To keep beta clutter from accumulating, the app auto-deletes stale data. A
+background sweep runs every `RETENTION_SWEEP_INTERVAL_HOURS` (and once at
+startup): any device whose most recent reading is older than `RETENTION_HOURS`
+(default **48h**) is purged. Because a project is just the set of readings that
+carry its name, a project disappears automatically once its last device is
+removed — but a project keeps living as long as **any** of its devices is still
+active. Set `RETENTION_HOURS=0` to turn the whole thing off.
+
+**Exceptions.** Some devices/projects should never be reaped (a permanent demo,
+a reference station). List them in `RETENTION_EXEMPT_DEVICES` (by `device_uuid`)
+and/or `RETENTION_EXEMPT_PROJECTS` (by project name), comma-separated. A device
+is spared if its UUID is exempt *or* its latest project is exempt. These are
+config today; the deletion logic takes the exempt sets as parameters, so the
+source can later move to a table without changing the rule.
+
 ## Configuration (environment variables)
 
 All optional; sensible defaults apply. See [`.env.example`](.env.example).
@@ -130,6 +147,10 @@ All optional; sensible defaults apply. See [`.env.example`](.env.example).
 | `INGEST_PATH` | `/sensor/measurement` | Endpoint devices POST to |
 | `MAX_PAYLOAD_BYTES` | `51200` | Max ingest body size (bytes); larger → 413 |
 | `DB_PATH` | `app/data/sensors.db` | SQLite file location |
+| `RETENTION_HOURS` | `48` | Auto-delete devices idle longer than this; `0` disables |
+| `RETENTION_SWEEP_INTERVAL_HOURS` | `1` | How often the cleanup sweep runs |
+| `RETENTION_EXEMPT_DEVICES` | *(empty)* | Comma-separated device UUIDs never auto-deleted |
+| `RETENTION_EXEMPT_PROJECTS` | *(empty)* | Comma-separated project names never auto-deleted |
 | `ECHARTS_SRC` | `/static/js/echarts.min.js` | Where the chart lib is served from |
 | `DEFAULT_RANGE_HOURS` | `168` | Default chart lookback (7 days) |
 

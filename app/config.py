@@ -25,6 +25,11 @@ def _env(name: str, default: str) -> str:
     return os.getenv(name, default)
 
 
+def _env_set(name: str) -> set[str]:
+    """Parse a comma-separated env var into a set of trimmed, non-empty values."""
+    return {v.strip() for v in os.getenv(name, "").split(",") if v.strip()}
+
+
 class Settings:
     def __init__(self) -> None:
         # Branding / public identity ------------------------------------
@@ -58,6 +63,22 @@ class Settings:
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         self.db_path = db_path
         self.database_url = f"sqlite:///{db_path}"
+
+        # Retention -----------------------------------------------------
+        # Devices with no reading newer than this many hours are purged (and a
+        # project disappears once all of its devices are gone). Set to 0 (or
+        # negative) to disable automatic deletion entirely.
+        self.retention_hours = int(_env("RETENTION_HOURS", "48"))
+        # How often the background sweeper runs, in hours.
+        self.retention_sweep_interval_hours = float(
+            _env("RETENTION_SWEEP_INTERVAL_HOURS", "1")
+        )
+        # Exceptions to the retention rule: device UUIDs and/or project names
+        # that are never auto-deleted, however long they stay silent. Both are
+        # comma-separated. A device is spared if its UUID is exempt OR its
+        # (latest) project is exempt.
+        self.retention_exempt_devices = _env_set("RETENTION_EXEMPT_DEVICES")
+        self.retention_exempt_projects = _env_set("RETENTION_EXEMPT_PROJECTS")
 
         # Frontend ------------------------------------------------------
         # Where the ECharts library is served from. Vendored by default so the

@@ -8,6 +8,7 @@ from app.database import init_db
 from app.routes.api import router as api_router
 from app.routes.ingest import router as ingest_router
 from app.routes.web import router as web_router
+from app.retention import start_retention_sweeper
 
 
 def _setup_logging() -> None:
@@ -31,6 +32,9 @@ _setup_logging()
 app = FastAPI(title=settings.app_title)
 
 init_db()
+
+# Background sweeper: auto-delete devices/projects idle past the retention window.
+start_retention_sweeper()
 
 _root = settings.root_path  # "" or e.g. "/dashboard"
 
