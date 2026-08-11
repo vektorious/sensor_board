@@ -121,7 +121,12 @@ h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--text-secondary); font-
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 14px;
+  /* Column + margin-top:auto on the figure keeps every number on the same
+     line even when one tile's label wraps and its neighbours' do not. */
+  display: flex;
+  flex-direction: column;
 }
+.stat-figure { margin-top: auto; }
 .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
 .stat-value { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .stat-value--sm { font-size: 0.95rem; font-weight: 600; }
@@ -302,6 +307,10 @@ code {
 .data-table tr:last-child td { border-bottom: none; }
 
 .stat-sub { font-size: 0.78rem; margin-top: 2px; }
+
+/* The main page's three totals carry a second line each, so they need more
+   room than the dashboard's narrow latest-value tiles. */
+.overview-grid--totals { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 
 .page-footer {
   margin-top: 48px;
