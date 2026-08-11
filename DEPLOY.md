@@ -124,6 +124,80 @@ git pull
 supervisorctl restart sensor_board
 ```
 
+## One-time upgrade to 0.2
+
+0.2 changes the ingestion contract and the URL layout, so it needs more than a
+`git pull`. Nothing here is reversible by simply checking out the old commit —
+take the backup.
+
+**1. Back up the database.** The app renames the old `readings` table aside on
+first start rather than migrating it; a copy means you can still export from it
+if something surprises you.
+
+```bash
+cd ~/sensor_board
+supervisorctl stop sensor_board
+cp app/data/sensors.db ~/sensors-pre-0.2.db
+```
+
+**2. Pull the new code.** No new dependencies, so `pip install` is optional.
+
+```bash
+git pull
+```
+
+**3. Update `.env`.** Three values changed meaning:
+
+- `BASE_URL` must now be the **domain alone** — `https://diy-sensor.org`, *not*
+  `https://diy-sensor.org/dashboard`. The main page appends `INGEST_PATH` to it
+  when printing examples, so a prefix here produces a broken curl command.
+- `ROOT_PATH` should stay `/dashboard`. That is now the default, and it is what
+  leaves `/` free for the main page.
+- `APP_TITLE` / `BRAND`: delete them to take the `DIY Sensor` default, or set
+  them to whatever you want the page to say. A stale value here silently wins
+  over the new default.
+
+Nothing else needs adding — every new setting (policy limits, database
+ceilings, global budgets) has a working default. See `.env.example` for what is
+available.
+
+**4. Route the domain root.** Three paths now belong to the app — `/` for the
+main page, `/dashboard`, and `/sensor` — so one backend at the root replaces
+the two subpath ones:
+
+```bash
+uberspace web backend set / --http --port 8020
+uberspace web backend del /dashboard        # now covered by /
+uberspace web backend del /sensor
+uberspace web backend list                  # confirm one entry, pointing at :8020
+```
+
+**5. Start it and check.**
+
+```bash
+supervisorctl start sensor_board
+supervisorctl status sensor_board
+.venv/bin/python -m app.admin status
+```
+
+The log will carry a one-line `WARNING` that the pre-0.2 `readings` table was
+renamed to `readings_pre_v0_2`. The app starts with an empty `readings` table:
+old rows have no owner under the new model, so they are set aside rather than
+migrated. Export anything you want from that table, then drop it:
+
+```bash
+sqlite3 app/data/sensors.db "DROP TABLE readings_pre_v0_2;"
+```
+
+**6. Update your devices.** This is the part that will not fix itself:
+
+- `device_uuid` is now **`device_id`** — an old payload gets a `400`.
+- Anonymous devices must send a `write_key`. Generate one at
+  `https://diy-sensor.org/`, save it, and flash it alongside the device ID.
+- If a device keeps using its API key and no write key, it carries on working
+  unchanged apart from the field rename, and stays permanent.
+- Remove any client-supplied `timestamp` field; it is now rejected.
+
 ## Pointing devices at it
 
 In each device's WiFiManager setup portal set:
