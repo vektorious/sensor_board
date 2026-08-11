@@ -7,8 +7,18 @@ query shapes: per-device time-series and per-project scans.
 Migrations are hand-rolled and idempotent — no Alembic for a beta. Every one is
 safe to run against a fresh database and against a database that has already
 been migrated, because startup runs them unconditionally in every worker.
+
+Idempotent is not enough on its own, though: gunicorn starts several workers at
+once, so schema setup also has to be safe against *itself running concurrently*
+in another process. Two workers that each check "does this table exist?" before
+either has finished creating it will both try to create it, and the loser dies
+with "index … already exists". Everything schema-related therefore runs under a
+cross-process file lock.
 """
+import fcntl
 import logging
+import os
+from contextlib import contextmanager
 
 from sqlalchemy import Index, event
 from sqlalchemy.engine import Engine
@@ -56,9 +66,34 @@ Index(
 _LEGACY_READINGS = "readings_pre_v0_2"
 
 
+@contextmanager
+def schema_lock():
+    """Serialise schema changes across every process touching this database.
+
+    A file lock rather than a SQLite transaction: `create_all()` opens its own
+    connection, so holding a write transaction here would deadlock against it.
+    `flock` is released automatically if the process dies, so a worker crashing
+    mid-migration cannot leave the lock held forever.
+
+    The lock file sits next to the database, so two deployments pointing at
+    different databases never block each other.
+    """
+    path = f"{settings.db_path}.init.lock"
+    fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
+
+
 def init_db() -> None:
-    _retire_legacy_readings()
-    SQLModel.metadata.create_all(engine)
+    # One worker does the work; the others wait here and then find everything
+    # already in place, which is the case the migration is written for.
+    with schema_lock():
+        _retire_legacy_readings()
+        SQLModel.metadata.create_all(engine)
 
 
 def _table_columns(conn, table: str) -> list[str]:
@@ -80,6 +115,14 @@ def _retire_legacy_readings() -> None:
         if not cols or "device_uuid" not in cols:
             return  # fresh database, or already on the 0.2 schema
 
+        # Never overwrite an already-parked table: it holds the only copy of
+        # the old rows. If one is there, park this one beside it instead.
+        parked = _LEGACY_READINGS
+        suffix = 1
+        while _table_columns(conn, parked):
+            suffix += 1
+            parked = f"{_LEGACY_READINGS}_{suffix}"
+
         # Indexes follow the renamed table but keep their names, which would
         # collide with the ones create_all() is about to create.
         for (name,) in conn.exec_driver_sql(
@@ -87,14 +130,13 @@ def _retire_legacy_readings() -> None:
             "WHERE type='index' AND tbl_name='readings' AND sql IS NOT NULL"
         ).fetchall():
             conn.exec_driver_sql(f'DROP INDEX IF EXISTS "{name}"')
-        conn.exec_driver_sql(f"DROP TABLE IF EXISTS {_LEGACY_READINGS}")
-        conn.exec_driver_sql(f"ALTER TABLE readings RENAME TO {_LEGACY_READINGS}")
+        conn.exec_driver_sql(f"ALTER TABLE readings RENAME TO {parked}")
         conn.commit()
 
     log.warning(
         "pre-0.2 readings table found; renamed to %s and starting fresh. "
         "Drop that table once you no longer need the old rows.",
-        _LEGACY_READINGS,
+        parked,
     )
 
 

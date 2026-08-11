@@ -36,6 +36,9 @@ from app.models import Device, Reading
 
 log = logging.getLogger("sensor_board.limits")
 
+# Shortest interval that yields a meaningful growth rate (see observe_db_size).
+MIN_GROWTH_SAMPLE_HOURS = 0.1  # 6 minutes
+
 
 @dataclass(frozen=True)
 class Decision:
@@ -384,7 +387,11 @@ def observe_db_size() -> dict:
     if previous is not None:
         last_size, last_at = previous
         elapsed_hours = (now - last_at).total_seconds() / 3600
-        if elapsed_hours > 0:
+        # Below a few minutes the rate is meaningless: a restart samples twice
+        # seconds apart, and dividing an ordinary WAL checkpoint by that gives
+        # thousands of MB/h. Skipping the estimate is better than crying wolf
+        # every time the service restarts.
+        if elapsed_hours >= MIN_GROWTH_SAMPLE_HOURS:
             rate = (size - last_size) / 1024**2 / elapsed_hours
             report["mb_per_hour"] = round(rate, 2)
             if rate > settings.db_growth_warn_mb_per_hour:
