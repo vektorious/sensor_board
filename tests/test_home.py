@@ -134,13 +134,78 @@ def test_says_the_device_id_is_public_not_secret():
     assert "Public, like a username" in page()
 
 
+def test_examples_carry_slots_the_generators_fill_in():
+    body = page()
+    # Each example marks where the generated values go, so a reader copies a
+    # snippet that already works instead of editing two placeholders in three
+    # places. Three code blocks plus the dashboard URL reference each field.
+    assert body.count('data-field="device-id"') >= 4
+    assert body.count('data-field="write-key"') >= 3
+    assert "YOUR-DEVICE-ID" in body      # the un-substituted default
+    assert "YOUR-WRITE-KEY" in body
+
+
+def test_offers_a_single_button_that_fills_everything():
+    assert "data-action='generate-all'" in page() or 'data-action="generate-all"' in page()
+
+
+def test_every_example_has_its_own_copy_button():
+    body = page()
+    assert body.count('data-action="copy-code"') == 3   # curl, Python, Arduino
+
+
+def test_warns_once_the_examples_contain_a_real_key():
+    body = page()
+    assert "These examples now contain your write key" in body
+    # Hidden until a key has actually been generated.
+    assert 'id="examples-filled" hidden' in body
+
+
+def test_limits_and_errors_come_after_the_quick_start():
+    body = page()
+    # Reference material belongs below the thing a first-time reader came for.
+    assert body.index("Send a measurement") < body.index(">Limits<")
+    assert body.index(">Limits<") < body.index(">Errors<")
+
+
+def generator_code() -> str:
+    """The generator script with comments stripped.
+
+    The comments discuss the APIs these tests forbid — they explain *why* the
+    key is never written to localStorage — so matching against the raw file
+    would fail on its own documentation.
+    """
+    import re
+
+    script = client.get("/dashboard/static/js/generators.js").text
+    assert script  # served at all
+    script = re.sub(r"/\*.*?\*/", "", script, flags=re.DOTALL)
+    return re.sub(r"^\s*//.*$", "", script, flags=re.MULTILINE)
+
+
+def test_substitution_never_builds_markup():
+    # A generated value is inserted as text, so it can never become an element.
+    code = generator_code()
+    assert "innerHTML" not in code
+    assert "textContent" in code
+
+
+def test_generated_values_are_not_persisted():
+    # Storing a write key would leave a secret on the machine long after the
+    # tab closed, to save one click.
+    code = generator_code()
+    assert "localStorage" not in code
+    assert "sessionStorage" not in code
+    assert "document.cookie" not in code
+
+
 def test_generator_script_is_served_and_self_contained():
-    script = client.get("/dashboard/static/js/generators.js")
-    assert script.status_code == 200
-    assert "crypto.getRandomValues" in script.text
+    assert client.get("/dashboard/static/js/generators.js").status_code == 200
+    code = generator_code()
+    assert "crypto.getRandomValues" in code
     # No network calls: a generated key must not leave the browser.
-    assert "fetch(" not in script.text
-    assert "XMLHttpRequest" not in script.text
+    assert "fetch(" not in code
+    assert "XMLHttpRequest" not in code
 
 
 def test_main_page_never_carries_a_secret():

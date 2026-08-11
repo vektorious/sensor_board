@@ -40,10 +40,13 @@ def _env_set(name: str) -> set[str]:
 class Settings:
     def __init__(self) -> None:
         # Branding / public identity ------------------------------------
-        self.app_title = _env("APP_TITLE", "Sensor Board")
+        # Defaults are this project's own deployment; override both for a
+        # differently branded instance.
+        self.app_title = _env("APP_TITLE", "DIY Sensor")
         self.brand = _env("BRAND", self.app_title)
-        # Public base URL (no trailing slash), used to build shareable links.
-        self.base_url = _env("BASE_URL", "").rstrip("/")
+        # Public base URL (no trailing slash). Used to print absolute, working
+        # examples on the main page — without it they fall back to bare paths.
+        self.base_url = _env("BASE_URL", "https://diy-sensor.org").rstrip("/")
 
         # Path prefix the dashboard UI is mounted under (no trailing slash).
         # Defaults to /dashboard so that "/" is free for the main page (plan

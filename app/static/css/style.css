@@ -226,6 +226,36 @@ h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--text-secondary); font-
   color: var(--text-primary);
 }
 
+/* --- code examples --- */
+.code-block { margin: 0 0 18px; }
+.code-block figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px 8px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.code-block .code { border-radius: 0 0 var(--radius) var(--radius); }
+
+/* A value substituted from a generator, so it is obvious what changed and
+   which parts of the snippet are yours. */
+[data-field] { color: var(--text-muted); }
+[data-field].is-filled {
+  color: var(--series-1);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--series-1) 12%, transparent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.generate-all { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0 4px; }
+
 /* Code blocks scroll on their own so the page body never does. */
 .code {
   background: var(--surface-1);

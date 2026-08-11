@@ -1,4 +1,4 @@
-# Sensor Board
+# DIY Sensor
 
 A small, self-hostable dashboard for time-series sensor data. Devices POST
 measurements to one endpoint; the dashboard **auto-populates** — every sensor a
@@ -12,7 +12,7 @@ after 48 hours without a successful write, which keeps a public instance from
 filling up with abandoned experiments.
 
 ```bash
-curl -X POST https://<your-domain>/sensor/measurement \
+curl -X POST https://diy-sensor.org/sensor/measurement \
   -H 'content-type: application/json' \
   -d '{
         "device_id": "greenhouse-01",
@@ -221,9 +221,9 @@ All optional; sensible defaults apply. See [`.env.example`](.env.example).
 
 | Var | Default | Purpose |
 |-----|---------|---------|
-| `APP_TITLE` | `Sensor Board` | Page title |
+| `APP_TITLE` | `DIY Sensor` | Page title |
 | `BRAND` | = `APP_TITLE` | Header brand text |
-| `BASE_URL` | *(empty)* | Public URL, used in the documented examples |
+| `BASE_URL` | `https://diy-sensor.org` | Public URL, used in the main page's examples |
 | `ROOT_PATH` | `/dashboard` | Dashboard prefix; `""` puts it at the root and drops the main page |
 | `FEEDBACK_URL` | project issues | Where the main page sends bug reports |
 | `API_KEY` / `API_KEYS` | `change-me` | Operator keys accepted as `x-api-key` |

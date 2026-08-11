@@ -19,9 +19,9 @@
       <span>Dashboard</span>
     </p>
     <p class="hero-lede">
-      No account, no API key, no setup. Choose a device ID and a write key, POST
-      your first measurement, and every sensor you send becomes a chart
-      automatically.
+      No account, no API key, no setup. Generate a device ID and a write key
+      below, POST your first measurement, and every sensor you send becomes a
+      chart automatically.
     </p>
     <p class="hero-actions">
       <a class="button" href="#quickstart">Publish a measurement</a>
@@ -73,6 +73,16 @@
       until your device makes its first measurement.
     </p>
 
+    <p class="generate-all">
+      <button type="button" class="button" data-action="generate-all">
+        Generate both and fill the examples
+      </button>
+      <span class="muted small">
+        …or generate them individually below. Already have a device? Type its ID
+        in and the examples will use it.
+      </span>
+    </p>
+
     <div class="generator-grid">
       <div class="generator card" data-generator="device-id">
         <h3>Device ID</h3>
@@ -82,7 +92,7 @@
           underscores — or take a random one.
         </p>
         <div class="generator-row">
-          <input type="text" data-output readonly placeholder="dev-…" aria-label="Generated device ID">
+          <input type="text" data-output placeholder="dev-…" aria-label="Device ID">
           <button type="button" class="button button--small" data-action="generate">Generate</button>
           <button type="button" class="button button--small button--quiet" data-action="copy">Copy</button>
         </div>
@@ -96,7 +106,7 @@
           <code>crypto.getRandomValues</code>, about 187 bits of entropy.
         </p>
         <div class="generator-row">
-          <input type="text" data-output readonly placeholder="click Generate" aria-label="Generated write key">
+          <input type="text" data-output placeholder="click Generate" aria-label="Write key">
           <button type="button" class="button button--small" data-action="generate">Generate</button>
           <button type="button" class="button button--small button--quiet" data-action="copy">Copy</button>
         </div>
@@ -118,11 +128,22 @@
       new one whenever you like and it appears on its own.
     </p>
 
+    <p class="notice notice--inline" id="examples-filled" hidden>
+      <strong>These examples now contain your write key.</strong>
+      Treat them like a password from here on: don't paste them into a chat, an
+      issue tracker, or a public repository.
+    </p>
+
+    <figure class="code-block">
+      <figcaption>
+        <span>curl</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
 <pre class="code"><code>curl -X POST {{ ingest_url }} \
   -H 'content-type: application/json' \
   -d '{
-        "device_id": "YOUR-DEVICE-ID",
-        "write_key": "YOUR-WRITE-KEY",
+        "device_id": "<span data-field="device-id">YOUR-DEVICE-ID</span>",
+        "write_key": "<span data-field="write-key">YOUR-WRITE-KEY</span>",
         "project": "balcony",
         "name": "Basil #3",
         "sensors": {
@@ -131,6 +152,7 @@
           "pump_running": false
         }
       }'</code></pre>
+    </figure>
 
     <p class="muted small">
       <code>project</code> groups devices onto a shared dashboard and
@@ -140,26 +162,35 @@
       ({{ plot_types | join(" or ") }}).
     </p>
 
-    <h3>Python</h3>
+    <figure class="code-block">
+      <figcaption>
+        <span>Python</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
 <pre class="code"><code>import requests
 
 requests.post(
     "{{ ingest_url }}",
     json={
-        "device_id": "YOUR-DEVICE-ID",
-        "write_key": "YOUR-WRITE-KEY",
+        "device_id": "<span data-field="device-id">YOUR-DEVICE-ID</span>",
+        "write_key": "<span data-field="write-key">YOUR-WRITE-KEY</span>",
         "sensors": {"temperature": 21.4, "humidity": 51},
     },
     timeout=10,
 ).raise_for_status()</code></pre>
+    </figure>
 
-    <h3>ESP32 / Arduino</h3>
+    <figure class="code-block">
+      <figcaption>
+        <span>ESP32 / Arduino</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
 <pre class="code"><code>#include &lt;WiFi.h&gt;
 #include &lt;HTTPClient.h&gt;
 
 const char *INGEST_URL = "{{ ingest_url }}";
-const char *DEVICE_ID  = "YOUR-DEVICE-ID";
-const char *WRITE_KEY  = "YOUR-WRITE-KEY";   // keep out of public repos
+const char *DEVICE_ID  = "<span data-field="device-id">YOUR-DEVICE-ID</span>";
+const char *WRITE_KEY  = "<span data-field="write-key">YOUR-WRITE-KEY</span>";   // keep out of public repos
 
 void publish(float temperature, float humidity) {
   if (WiFi.status() != WL_CONNECTED) return;
@@ -180,15 +211,16 @@ void publish(float temperature, float humidity) {
   Serial.printf("ingest -> %d\n", status);
   http.end();
 }</code></pre>
+    </figure>
 
     <p>
       Your dashboard is then at
-      <code class="mono">{{ dashboard_path }}/device/YOUR-DEVICE-ID</code>.
+      <code class="mono">{{ dashboard_path }}/device/<span data-field="device-id">YOUR-DEVICE-ID</span></code>.
     </p>
   </section>
 
-  <section id="reference">
-    <h2>Handling your keys</h2>
+  <section>
+    <h2>3. Look after your key</h2>
     <ul class="prose-list">
       <li>
         <strong>Send the write key in the request body, over HTTPS</strong> —
@@ -215,7 +247,30 @@ void publish(float temperature, float humidity) {
         write key.
       </li>
     </ul>
+  </section>
 
+  <section>
+    <h2>What happens to your data</h2>
+    <ul class="prose-list">
+      <li>
+        A device with no successful write for {{ retention_hours }} hours is
+        deleted, along with all of its measurements and its stored key hash.
+      </li>
+      <li>
+        The device ID then becomes free for anyone to claim again. A reclaimed
+        ID starts empty — none of the previous owner's data is visible.
+      </li>
+      <li>
+        Devices created with an API key are permanent and are not swept.
+      </li>
+      <li>
+        Timestamps are assigned by the server when it receives a measurement;
+        clients cannot backdate data.
+      </li>
+    </ul>
+  </section>
+
+  <section id="reference">
     <h2>Limits</h2>
     <p class="muted small">
       Deliberately tight while this is in beta; they will be loosened as real
@@ -254,25 +309,6 @@ void publish(float temperature, float humidity) {
       <code>201</code> when it claimed the device and <code>200</code> when it
       appended to one.
     </p>
-
-    <h2>What happens to your data</h2>
-    <ul class="prose-list">
-      <li>
-        A device with no successful write for {{ retention_hours }} hours is
-        deleted, along with all of its measurements and its stored key hash.
-      </li>
-      <li>
-        The device ID then becomes free for anyone to claim again. A reclaimed
-        ID starts empty — none of the previous owner's data is visible.
-      </li>
-      <li>
-        Devices created with an API key are permanent and are not swept.
-      </li>
-      <li>
-        Timestamps are assigned by the server when it receives a measurement;
-        clients cannot backdate data.
-      </li>
-    </ul>
   </section>
 
   <footer class="page-footer">

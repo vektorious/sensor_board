@@ -30,7 +30,9 @@ or API key, claiming a device with a write key they choose themselves.
 - Lifetime platform metrics that survive expiry (`devices_total`,
   `measurements_total`, `projects_total`).
 - A public main page at `/` with documentation, live totals, and in-browser
-  write-key and device-ID generators.
+  write-key and device-ID generators. Generated values are substituted straight
+  into the curl, Python, and ESP32 examples, each of which has its own copy
+  button.
 - Security headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`,
   frame-ancestors) on every response, and sanitising of attacker-controlled
   fields before they reach the log.
@@ -47,6 +49,9 @@ or API key, claiming a device with a write key they choose themselves.
   ID is claimed rather than only on the hourly sweep.
 - The dashboard moved under `/dashboard`; `/` is the main page. Set
   `ROOT_PATH=""` for the old layout, which drops the main page.
+- `APP_TITLE`, `BRAND`, and `BASE_URL` now default to this project's own
+  deployment (DIY Sensor, https://diy-sensor.org); override them for a
+  differently branded instance.
 - Clients can no longer send their own `timestamp`; the server's receipt time is
   authoritative, so data cannot be backdated past the retention window.
 
