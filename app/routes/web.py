@@ -19,6 +19,9 @@ def _ctx(**extra) -> dict:
         # URL prefix the UI is mounted under; templates/JS prepend it to links
         # and fetches. "" at root, "/dashboard" when mounted there.
         "base_path": settings.root_path,
+        # The main page, when there is one. It only exists if the dashboard is
+        # mounted under a prefix — otherwise the dashboard itself owns "/".
+        "home_path": "/" if settings.root_path else None,
     }
     base.update(extra)
     return base
@@ -46,10 +49,10 @@ def project_dashboard(request: Request, slug: str):
     )
 
 
-@router.get("/device/{device_uuid}", response_class=HTMLResponse)
-def device_dashboard(request: Request, device_uuid: str):
+@router.get("/device/{device_id}", response_class=HTMLResponse)
+def device_dashboard(request: Request, device_id: str):
     return templates.TemplateResponse(
         request,
         "device.html",
-        _ctx(device_uuid=device_uuid, info=queries.device_info(device_uuid)),
+        _ctx(device_id=device_id, info=queries.device_info(device_id)),
     )

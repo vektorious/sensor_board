@@ -39,26 +39,26 @@ def api_project_series(
     }
 
 
-@router.get("/device/{device_uuid}/sensors")
-def api_device_sensors(device_uuid: str):
+@router.get("/device/{device_id}/sensors")
+def api_device_sensors(device_id: str):
     """Panel descriptors (meta + latest value) — drives auto-population."""
-    info = queries.device_info(device_uuid)
+    info = queries.device_info(device_id)
     if info is None:
         raise HTTPException(status_code=404, detail="Unknown device")
-    return {"device": info, "sensors": queries.device_sensors(device_uuid)}
+    return {"device": info, "sensors": queries.device_sensors(device_id)}
 
 
-@router.get("/device/{device_uuid}/series")
+@router.get("/device/{device_id}/series")
 def api_device_series(
-    device_uuid: str,
+    device_id: str,
     sensor: str = Query(..., description="sensor_type key"),
     hours: int = Query(None, description="lookback window; <=0 or omitted = default; use 0 for all"),
 ):
     if hours is None:
         hours = settings.default_range_hours
     return {
-        "device_uuid": device_uuid,
+        "device_id": device_id,
         "sensor": sensor,
         "hours": hours,
-        "points": queries.series(device_uuid, sensor, hours),
+        "points": queries.series(device_id, sensor, hours),
     }

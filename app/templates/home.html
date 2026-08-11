@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}{{ app_title }} — publish sensor data from anything{% endblock %}
+
+{% block header_extra %}
+  <nav class="header-nav">
+    <a href="{{ dashboard_path }}">Dashboard</a>
+    <a href="#quickstart">Quick start</a>
+    <a href="#reference">Reference</a>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <h1>Point anything that speaks JSON at one URL and get a live dashboard.</h1>
+    <p class="hero-flow" aria-label="Microcontroller to JSON to API to Dashboard">
+      <span>Microcontroller</span><span class="arrow">→</span>
+      <span>JSON</span><span class="arrow">→</span>
+      <span>API</span><span class="arrow">→</span>
+      <span>Dashboard</span>
+    </p>
+    <p class="hero-lede">
+      No account, no API key, no setup. Generate a device ID and a write key
+      below, POST your first measurement, and every sensor you send becomes a
+      chart automatically.
+    </p>
+    <p class="hero-actions">
+      <a class="button" href="#quickstart">Publish a measurement</a>
+      <a class="button button--quiet" href="{{ dashboard_path }}">Browse the dashboard</a>
+    </p>
+  </section>
+
+  <div class="notice notice--warning">
+    <strong>Beta, and public.</strong>
+    Every dashboard on this instance is readable by anyone who knows the device
+    ID — there are no private dashboards yet. Anonymous devices and all their
+    measurements are deleted after {{ retention_hours }} hours without a
+    successful write. Don't publish anything here you would mind other people
+    reading, and don't rely on this as your only copy of the data.
+  </div>
+
+  <section>
+    <h2>On this instance right now</h2>
+    <div class="overview-grid">
+      <div class="stat">
+        <div class="stat-label">Devices, all time</div>
+        <div class="stat-value">{{ "{:,}".format(stats.devices_total) }}</div>
+        <div class="stat-sub muted">{{ "{:,}".format(stats.devices_active) }} live now</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Measurements, all time</div>
+        <div class="stat-value">{{ "{:,}".format(stats.measurements_total) }}</div>
+        <div class="stat-sub muted">{{ "{:,}".format(stats.measurements_active) }} stored now</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Projects, all time</div>
+        <div class="stat-value">{{ "{:,}".format(stats.projects_total) }}</div>
+        <div class="stat-sub muted">{{ "{:,}".format(stats.projects_active) }} live now</div>
+      </div>
+    </div>
+    <p class="muted small">
+      All-time totals include devices and measurements that have since expired.
+      They only ever go up.
+    </p>
+  </section>
+
+  <section id="quickstart">
+    <h2>1. Generate your two identifiers</h2>
+    <p>
+      A device is identified by a <strong>device ID</strong> and owned by a
+      <strong>write key</strong>. The first request to use an unclaimed device
+      ID claims it; every later write to that device must present the same write
+      key. Both are generated here in your browser and neither is sent anywhere
+      until your device makes its first measurement.
+    </p>
+
+    <p class="generate-all">
+      <button type="button" class="button" data-action="generate-all">
+        Generate both and fill the examples
+      </button>
+      <span class="muted small">
+        …or generate them individually below. Already have a device? Type its ID
+        in and the examples will use it.
+      </span>
+    </p>
+
+    <div class="generator-grid">
+      <div class="generator card" data-generator="device-id">
+        <h3>Device ID</h3>
+        <p class="muted small">
+          Public, like a username. It appears in your dashboard URL, so anyone
+          who has it can read your charts. Use letters, digits, hyphens, and
+          underscores — or take a random one.
+        </p>
+        <div class="generator-row">
+          <input type="text" data-output placeholder="dev-…" aria-label="Device ID">
+          <button type="button" class="button button--small" data-action="generate">Generate</button>
+          <button type="button" class="button button--small button--quiet" data-action="copy">Copy</button>
+        </div>
+      </div>
+
+      <div class="generator card" data-generator="write-key">
+        <h3>Write key</h3>
+        <p class="muted small">
+          Secret, like a password — it is the only thing stopping someone else
+          writing to your device. Generated locally with
+          <code>crypto.getRandomValues</code>, about 187 bits of entropy.
+        </p>
+        <div class="generator-row">
+          <input type="text" data-output placeholder="click Generate" aria-label="Write key">
+          <button type="button" class="button button--small" data-action="generate">Generate</button>
+          <button type="button" class="button button--small button--quiet" data-action="copy">Copy</button>
+        </div>
+        <p class="notice notice--inline">
+          <strong>Save it now.</strong> We store only a hash of your write key,
+          so it cannot be shown to you again, reset, or recovered. Lose it and
+          your only options are a different device ID or waiting
+          {{ retention_hours }} hours for the device to expire.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Send a measurement</h2>
+    <p>
+      One <code>POST</code> to <code class="mono">{{ ingest_path }}</code>. Each
+      entry in <code>sensors</code> becomes a chart named after its key — send a
+      new one whenever you like and it appears on its own.
+    </p>
+
+    <p class="notice notice--inline" id="examples-filled" hidden>
+      <strong>These examples now contain your write key.</strong>
+      Treat them like a password from here on: don't paste them into a chat, an
+      issue tracker, or a public repository.
+    </p>
+
+    <figure class="code-block">
+      <figcaption>
+        <span>curl</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
+<pre class="code"><code>curl -X POST {{ ingest_url }} \
+  -H 'content-type: application/json' \
+  -d '{
+        "device_id": "<span data-field="device-id">YOUR-DEVICE-ID</span>",
+        "write_key": "<span data-field="write-key">YOUR-WRITE-KEY</span>",
+        "project": "balcony",
+        "name": "Basil #3",
+        "sensors": {
+          "temperature": {"value": 21.4, "unit": "C"},
+          "humidity": 51,
+          "pump_running": false
+        }
+      }'</code></pre>
+    </figure>
+
+    <p class="muted small">
+      <code>project</code> groups devices onto a shared dashboard and
+      <code>name</code> is a display label; both are optional. A sensor value
+      may be a bare number or an object with <code>value</code>,
+      <code>unit</code>, and <code>plot</code>
+      ({{ plot_types | join(" or ") }}).
+    </p>
+
+    <figure class="code-block">
+      <figcaption>
+        <span>Python</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
+<pre class="code"><code>import requests
+
+requests.post(
+    "{{ ingest_url }}",
+    json={
+        "device_id": "<span data-field="device-id">YOUR-DEVICE-ID</span>",
+        "write_key": "<span data-field="write-key">YOUR-WRITE-KEY</span>",
+        "sensors": {"temperature": 21.4, "humidity": 51},
+    },
+    timeout=10,
+).raise_for_status()</code></pre>
+    </figure>
+
+    <figure class="code-block">
+      <figcaption>
+        <span>ESP32 / Arduino</span>
+        <button type="button" class="button button--small button--quiet" data-action="copy-code">Copy</button>
+      </figcaption>
+<pre class="code"><code>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+
+const char *INGEST_URL = "{{ ingest_url }}";
+const char *DEVICE_ID  = "<span data-field="device-id">YOUR-DEVICE-ID</span>";
+const char *WRITE_KEY  = "<span data-field="write-key">YOUR-WRITE-KEY</span>";   // keep out of public repos
+
+void publish(float temperature, float humidity) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  http.begin(INGEST_URL);
+  http.addHeader("Content-Type", "application/json");
+
+  char body[256];
+  snprintf(body, sizeof(body),
+           "{\"device_id\":\"%s\",\"write_key\":\"%s\","
+           "\"sensors\":{\"temperature\":%.2f,\"humidity\":%.2f}}",
+           DEVICE_ID, WRITE_KEY, temperature, humidity);
+
+  int status = http.POST(body);
+  // 201 = device claimed, 200 = measurement appended.
+  // 429/503 mean "slow down": back off, don't retry in a tight loop.
+  Serial.printf("ingest -> %d\n", status);
+  http.end();
+}</code></pre>
+    </figure>
+
+    <p>
+      Your dashboard is then at
+      <code class="mono">{{ dashboard_path }}/device/<span data-field="device-id">YOUR-DEVICE-ID</span></code>.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Look after your key</h2>
+    <ul class="prose-list">
+      <li>
+        <strong>Send the write key in the request body, over HTTPS</strong> —
+        never in the URL. Query strings end up in proxy logs and browser
+        history; the body does not.
+      </li>
+      <li>
+        <strong>Keep it out of your repository.</strong> Put it in a config file
+        you don't commit, or a build-time constant. A key pushed to a public
+        repository should be treated as burnt: claim a new device ID.
+      </li>
+      <li>
+        <strong>One key per device.</strong> Sharing a key between devices means
+        that losing one exposes all of them.
+      </li>
+      <li>
+        <strong>The device ID is not a secret</strong> and gives no write
+        access — but knowing it is enough to read the dashboard.
+      </li>
+      <li>
+        <strong>API keys are for operators.</strong> If you were issued one,
+        send it as the <code>X-API-Key</code> header: it raises your limits and
+        makes your devices permanent. It does <em>not</em> override any device's
+        write key.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What happens to your data</h2>
+    <ul class="prose-list">
+      <li>
+        A device with no successful write for {{ retention_hours }} hours is
+        deleted, along with all of its measurements and its stored key hash.
+      </li>
+      <li>
+        The device ID then becomes free for anyone to claim again. A reclaimed
+        ID starts empty — none of the previous owner's data is visible.
+      </li>
+      <li>
+        Devices created with an API key are permanent and are not swept.
+      </li>
+      <li>
+        Timestamps are assigned by the server when it receives a measurement;
+        clients cannot backdate data.
+      </li>
+    </ul>
+  </section>
+
+  <section id="reference">
+    <h2>Limits</h2>
+    <p class="muted small">
+      Deliberately tight while this is in beta; they will be loosened as real
+      usage shows what normal looks like. Rate-limited responses carry a
+      <code>Retry-After</code> header.
+    </p>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Limit</th><th>Anonymous</th></tr></thead>
+        <tbody>
+          {% for row in limits %}
+          <tr><td>{{ row.limit }}</td><td class="mono">{{ row.value }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Errors</h2>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Status</th><th>Code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          {% for status, code, meaning in error_codes %}
+          <tr>
+            <td class="mono">{{ status }}</td>
+            <td class="mono">{{ code }}</td>
+            <td>{{ meaning }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted small">
+      Every error response is JSON with an <code>error</code> message and a
+      stable <code>code</code>. A successful write returns
+      <code>201</code> when it claimed the device and <code>200</code> when it
+      appended to one.
+    </p>
+  </section>
+
+  <footer class="page-footer">
+    <p>
+      {{ brand }} v{{ version }} ·
+      <a href="{{ dashboard_path }}">Dashboard</a>
+      {% if feedback_url %} · <a href="{{ feedback_url }}">Report a problem or request a feature</a>{% endif %}
+    </p>
+  </footer>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ base_path }}/static/js/generators.js"></script>
+{% endblock %}

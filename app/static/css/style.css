@@ -142,3 +142,174 @@ h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--text-secondary); font-
 .panel-latest { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 0.9rem; }
 .panel-chart { width: 100%; height: 200px; }
 .panel.gauge .panel-chart { height: 180px; }
+
+/* ============================================================
+   Main page (/) — landing, docs, and the two generators.
+   Everything below is scoped to elements that appear only there,
+   so the dashboard styling above is untouched.
+   ============================================================ */
+
+.header-nav { display: flex; gap: 18px; font-size: 0.9rem; }
+.header-nav a { color: var(--text-secondary); }
+
+.hero { padding: 8px 0 4px; }
+.hero h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.2; max-width: 20ch; }
+.hero-lede { max-width: 60ch; color: var(--text-secondary); }
+
+/* The workflow line. Wraps to two rows on a phone rather than scrolling. */
+.hero-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.hero-flow span { background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
+.hero-flow .arrow { background: none; border: none; padding: 0; color: var(--text-muted); }
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+.button {
+  display: inline-block;
+  background: var(--series-1);
+  color: #fff;
+  border: 1px solid var(--series-1);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+.button:hover { filter: brightness(1.08); text-decoration: none; }
+.button--quiet { background: var(--surface-1); color: var(--text-primary); border-color: var(--border); }
+.button--small { padding: 7px 12px; font-size: 0.85rem; }
+.button.is-done { background: var(--good); border-color: var(--good); color: #fff; }
+
+.notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  background: var(--surface-1);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 28px 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+.notice strong { color: var(--text-primary); }
+.notice--inline { margin: 14px 0 0; font-size: 0.85rem; }
+
+.small { font-size: 0.85rem; }
+
+.generator-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--gap);
+  margin-top: 16px;
+}
+.generator { padding: 16px; }
+.generator h3 { margin: 0 0 6px; font-size: 1rem; }
+.generator-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.generator-row input {
+  flex: 1 1 100%;
+  min-width: 0;               /* lets a long key shrink instead of overflowing */
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-0);
+  color: var(--text-primary);
+}
+
+/* --- code examples --- */
+.code-block { margin: 0 0 18px; }
+.code-block figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px 8px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.code-block .code { border-radius: 0 0 var(--radius) var(--radius); }
+
+/* A value substituted from a generator, so it is obvious what changed and
+   which parts of the snippet are yours. */
+[data-field] { color: var(--text-muted); }
+[data-field].is-filled {
+  color: var(--series-1);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--series-1) 12%, transparent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.generate-all { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0 4px; }
+
+/* Code blocks scroll on their own so the page body never does. */
+.code {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.code code { white-space: pre; }
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.code code { background: none; border: none; padding: 0; }
+
+.prose-list { max-width: 72ch; padding-left: 20px; color: var(--text-secondary); }
+.prose-list li { margin-bottom: 10px; }
+.prose-list strong { color: var(--text-primary); }
+
+.table-scroll { overflow-x: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.data-table th { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+.data-table tr:last-child td { border-bottom: none; }
+
+.stat-sub { font-size: 0.78rem; margin-top: 2px; }
+
+.page-footer {
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Expiry warning on a device page (§17): amber once the window is nearly up. */
+.expiry-warning { color: var(--warning); }

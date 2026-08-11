@@ -25,6 +25,13 @@ def _env(name: str, default: str) -> str:
     return os.getenv(name, default)
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
 def _env_set(name: str) -> set[str]:
     """Parse a comma-separated env var into a set of trimmed, non-empty values."""
     return {v.strip() for v in os.getenv(name, "").split(",") if v.strip()}
@@ -33,15 +40,25 @@ def _env_set(name: str) -> set[str]:
 class Settings:
     def __init__(self) -> None:
         # Branding / public identity ------------------------------------
-        self.app_title = _env("APP_TITLE", "Sensor Board")
+        # Defaults are this project's own deployment; override both for a
+        # differently branded instance.
+        self.app_title = _env("APP_TITLE", "DIY Sensor")
         self.brand = _env("BRAND", self.app_title)
-        # Public base URL (no trailing slash), used to build shareable links.
-        self.base_url = _env("BASE_URL", "").rstrip("/")
+        # Public base URL (no trailing slash). Used to print absolute, working
+        # examples on the main page — without it they fall back to bare paths.
+        self.base_url = _env("BASE_URL", "https://diy-sensor.org").rstrip("/")
 
         # Path prefix the dashboard UI is mounted under (no trailing slash).
-        # "" = domain root; "/dashboard" = served under /dashboard/… . The whole
-        # UI (pages, API, static) sits under this; the ingest endpoint does not.
-        self.root_path = _env("ROOT_PATH", "").rstrip("/")
+        # Defaults to /dashboard so that "/" is free for the main page (plan
+        # §26). Set it to "" to put the dashboard back at the domain root — the
+        # main page is then not served at all, since the two would collide.
+        self.root_path = _env("ROOT_PATH", "/dashboard").rstrip("/")
+
+        # Where users should report problems. Shown on the main page; hidden
+        # when empty.
+        self.feedback_url = _env(
+            "FEEDBACK_URL", "https://github.com/vektorious/sensor_board/issues"
+        )
 
         # Ingestion -----------------------------------------------------
         # Accept one or many keys. API_KEYS (comma-separated) takes precedence;
@@ -55,8 +72,26 @@ class Settings:
             self.api_keys = [_env("API_KEY", "change-me")]
         # Path devices POST to. Generic by default; override for compat.
         self.ingest_path = _env("INGEST_PATH", "/sensor/measurement")
-        # Reject ingest bodies larger than this many bytes (default 50 KB).
-        self.max_payload_bytes = int(_env("MAX_PAYLOAD_BYTES", str(50 * 1024)))
+        # Whether unauthenticated (write-key) ingestion is accepted at all.
+        # Turn it off to run a private, API-key-only instance.
+        self.allow_anonymous = _env_bool("ALLOW_ANONYMOUS", True)
+
+        # Global write budget (plan §24) ---------------------------------
+        # A platform-wide token bucket over accepted measurement rows, on top
+        # of the per-policy budgets. This bounds the write *flow* no matter who
+        # is writing or how many policies exist. Over budget -> 503.
+        self.global_writes_per_second = int(_env("GLOBAL_WRITES_PER_SECOND", "10"))
+        self.global_write_burst = int(_env("GLOBAL_WRITE_BURST", "1000"))
+
+        # Database size guards (plan §24, §27) ---------------------------
+        # WARN size is early warning; MAX is enforcement — ingestion returns
+        # 503 above it. Both assume a 10 GB host quota; scale to the real one.
+        self.db_size_warn_bytes = int(_env("DB_SIZE_WARN_BYTES", str(1024**3)))
+        self.db_size_max_bytes = int(_env("DB_SIZE_MAX_BYTES", str(2 * 1024**3)))
+        # Growth faster than this logs a WARNING on each retention sweep.
+        self.db_growth_warn_mb_per_hour = float(
+            _env("DB_GROWTH_WARN_MB_PER_HOUR", "50")
+        )
 
         # Storage -------------------------------------------------------
         db_path = _env("DB_PATH", str(BASE_DIR / "data" / "sensors.db"))

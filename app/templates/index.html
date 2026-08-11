@@ -2,6 +2,13 @@
 {% block content %}
   <h1>Overview</h1>
 
+  <div class="notice notice--warning">
+    <strong>Every dashboard here is public.</strong>
+    Anyone who knows a device ID can read its charts. Write keys are never shown
+    on any page.{% if home_path %} See the
+    <a href="{{ home_path }}">main page</a> for how to publish your own data.{% endif %}
+  </div>
+
   <section>
     <h2>Stats</h2>
     <div class="overview-grid">
@@ -38,9 +45,9 @@
     {% if devices %}
     <div class="card-grid">
       {% for d in devices %}
-      <a class="card link-card" href="{{ base_path }}/device/{{ d.device_uuid }}">
-        <div class="card-title">{{ d.device_name or d.device_uuid }}</div>
-        <div class="card-meta mono">{{ d.device_uuid }}</div>
+      <a class="card link-card" href="{{ base_path }}/device/{{ d.device_id }}">
+        <div class="card-title">{{ d.device_name or d.device_id }}</div>
+        <div class="card-meta mono">{{ d.device_id }}</div>
         {% if d.project %}<div class="card-meta">project: {{ d.project }}</div>{% endif %}
         <div class="card-meta muted">last seen {{ d.last_seen.strftime('%Y-%m-%d %H:%M UTC') if d.last_seen else '—' }}</div>
       </a>
