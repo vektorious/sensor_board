@@ -5,7 +5,7 @@ All notable changes to Sensor Board are documented here. The project follows
 ingestion contract may change between minor releases — breaking changes are
 called out explicitly.
 
-## [0.2.0] — unreleased
+## [0.2.0] — 2026-08-11
 
 The temporary-device release: anyone can publish sensor data without an account
 or API key, claiming a device with a write key they choose themselves.
@@ -32,13 +32,31 @@ or API key, claiming a device with a write key they choose themselves.
 - A public main page at `/` with documentation, live totals, and in-browser
   write-key and device-ID generators.
 - Security headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`,
-  frame-ancestors) on every response.
+  frame-ancestors) on every response, and sanitising of attacker-controlled
+  fields before they reach the log.
+- Boolean, short-string, and null measurements alongside numbers. Booleans are
+  stored as 1/0 so they still chart.
+- `python -m app.admin` for status, forced sweeps, device inspection, and
+  deleting one tester's data.
 
 ### Changed
 
 - Retention now expires *devices* by `last_seen_at` rather than inferring
-  staleness from measurement timestamps, and skips persistent devices.
-- The dashboard moved under `/dashboard`; `/` is the main page.
+  staleness from measurement timestamps, and skips persistent devices. Only
+  successful writes advance the clock, and expiry is also checked when a device
+  ID is claimed rather than only on the hourly sweep.
+- The dashboard moved under `/dashboard`; `/` is the main page. Set
+  `ROOT_PATH=""` for the old layout, which drops the main page.
+- Clients can no longer send their own `timestamp`; the server's receipt time is
+  authoritative, so data cannot be backdated past the retention window.
+
+### Removed
+
+- `MAX_PAYLOAD_BYTES` — payload size is now a per-policy limit
+  (`POLICY_<NAME>_MAX_PAYLOAD_BYTES`), 16 KB for anonymous requests.
+- Pre-0.2 `readings` rows are not migrated. The old table is renamed to
+  `readings_pre_v0_2` on first start so it can be exported, then dropped by
+  hand; the app starts with an empty `readings` table.
 
 ## [0.1.0] — 2026-07-15
 

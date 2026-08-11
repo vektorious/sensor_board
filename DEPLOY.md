@@ -72,20 +72,35 @@ uberspace web backend list                          # confirm both point at :802
 ```
 
 DNS propagation + Let's Encrypt cert issuance happen automatically once the
-records resolve. (`<your-domain>/` itself stays unrouted — free for a future
-landing page.)
+records resolve. `<your-domain>/` serves the public main page — the
+documentation, live totals, and the device-ID/write-key generators.
 
 ## 5. Verify
 
 ```bash
-curl -s https://<your-domain>/dashboard/ | head
-# send a test measurement with one of your keys:
+curl -s https://<your-domain>/ | head            # main page
+curl -s https://<your-domain>/dashboard/ | head  # dashboard
+
+# Anonymous publishing — no key needed. The write key is yours to choose;
+# whoever writes first with it owns the device ID from then on.
+curl -X POST https://<your-domain>/sensor/measurement \
+  -H 'content-type: application/json' \
+  -d '{"project":"demo","name":"Test","device_id":"testdev","write_key":"pick-a-strong-one","sensors":{"temperature":{"value":21.4,"unit":"C"}}}'
+
+# With an operator key, the device becomes permanent instead of expiring.
 curl -X POST https://<your-domain>/sensor/measurement \
   -H 'x-api-key: <one-of-your-keys>' -H 'content-type: application/json' \
-  -d '{"project":"demo","name":"Test","device_uuid":"testdev","sensors":{"temperature":{"value":21.4,"unit":"C"}}}'
+  -d '{"device_id":"reference-station","sensors":{"temperature":21.4}}'
 ```
 
-Then open `https://<your-domain>/dashboard/device/testdev`.
+Then open `https://<your-domain>/dashboard/device/testdev`. A first write
+returns `201` (device claimed); later writes return `200`.
+
+Check the platform's own view of itself with:
+
+```bash
+cd ~/sensor_board && .venv/bin/python -m app.admin status
+```
 
 ## Updating later
 
