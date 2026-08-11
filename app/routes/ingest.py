@@ -41,7 +41,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
-from app import limits, metrics
+from app import limits, metrics, retention
 from app.config import settings
 from app.database import get_session
 from app.models import Device, Reading
@@ -271,6 +271,12 @@ def _store(payload, policy, key_hash: str | None, ip_hash: str, log: dict) -> bo
     authenticated = key_hash is not None
 
     # Phase 1 — authorize against the current state (read only).
+    # An already-expired device is deleted here rather than waiting for the
+    # hourly sweep, so a client claiming a long-silent ID is not told it is
+    # taken by a device that no longer really exists (§4).
+    if retention.expire_if_stale(payload.device_id, now):
+        log["action"] = "expired-predecessor"
+
     with get_session() as session:
         device = session.exec(
             select(Device).where(Device.device_id == payload.device_id)
