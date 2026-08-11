@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app import __version__
 from app.config import settings
 from app.database import init_db
 from app.routes.api import router as api_router
@@ -29,7 +30,7 @@ def _setup_logging() -> None:
 
 _setup_logging()
 
-app = FastAPI(title=settings.app_title)
+app = FastAPI(title=settings.app_title, version=__version__)
 
 init_db()
 
