@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from app import __version__
 from app.config import settings
 from app.database import init_db
+from app.limits import init_limits
+from app.middleware import SecurityHeadersMiddleware
 from app.routes.api import router as api_router
 from app.routes.ingest import router as ingest_router
 from app.routes.web import router as web_router
@@ -32,12 +34,15 @@ _setup_logging()
 
 app = FastAPI(title=settings.app_title, version=__version__)
 
+app.add_middleware(SecurityHeadersMiddleware)
+
 init_db()
+init_limits()
 
 # Background sweeper: auto-delete devices/projects idle past the retention window.
 start_retention_sweeper()
 
-_root = settings.root_path  # "" or e.g. "/dashboard"
+_root = settings.root_path  # "/dashboard" by default, "" to serve at the root
 
 # UI (static, JSON API, pages) lives under the configurable prefix.
 app.mount(f"{_root}/static", StaticFiles(directory="app/static"), name="static")

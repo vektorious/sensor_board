@@ -60,6 +60,11 @@ class Device(SQLModel, table=True):
     # table (see plan §27, "API-key auth settings left untouched for the beta").
     created_by_key_hash: Optional[str] = Field(default=None)
 
+    # SHA-256 of the creating client's IP. Hashed rather than stored plainly:
+    # it exists only to count how many devices one address has claimed (§11),
+    # which equality alone answers, and IP addresses are personal data.
+    created_from_ip_hash: Optional[str] = Field(default=None, index=True)
+
     created_at: datetime = Field(index=True)
     # Advanced only by *successful* writes — this is what expiry is measured
     # against, so a rejected request can never keep a device alive (§3).
