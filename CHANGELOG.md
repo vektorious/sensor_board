@@ -5,6 +5,22 @@ All notable changes to Sensor Board are documented here. The project follows
 ingestion contract may change between minor releases — breaking changes are
 called out explicitly.
 
+## [0.2.1] — 2026-08-11
+
+### Fixed
+
+- **Schema setup crashed when gunicorn started more than one worker.** Each
+  worker ran the migration concurrently; the one that lost the race died with
+  `index ix_readings_device_id already exists`, and the service crash-looped
+  until the schema happened to be complete. Schema changes now run under a
+  cross-process file lock.
+- **A racing worker could delete the parked pre-0.2 table**, which holds the
+  only copy of the old rows. A second legacy table is now parked beside the
+  first rather than over it.
+- Growth-rate warnings are no longer computed from samples taken moments apart,
+  which made every restart log an implausible figure (`2061 MB/h` on the first
+  real deployment).
+
 ## [0.2.0] — 2026-08-11
 
 The temporary-device release: anyone can publish sensor data without an account

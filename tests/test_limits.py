@@ -262,20 +262,56 @@ def test_windows_are_swept_so_the_table_cannot_grow_forever():
     assert removed >= 1
 
 
+def seed_size_sample(size_bytes: int, hours_ago: float) -> None:
+    """Backdate the stored database-size sample.
+
+    Growth is measured between two samples, so a test that wants a rate has to
+    place the earlier one in the past — two real samples taken milliseconds
+    apart are exactly the case the code now refuses to extrapolate from.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from app.database import get_session
+    from app.models import PlatformMetric
+
+    stamp = datetime.now(UTC) - timedelta(hours=hours_ago)
+    with get_session() as s:
+        row = s.get(PlatformMetric, "db_size_bytes")
+        if row is None:
+            row = PlatformMetric(metric_name="db_size_bytes", metric_value=size_bytes)
+        row.metric_value = size_bytes
+        row.updated_at = stamp
+        s.add(row)
+        s.commit()
+
+
 def test_db_size_observation_records_a_gauge_and_a_rate():
-    first = limits.observe_db_size()
-    assert first["size_bytes"] > 0
-    second = limits.observe_db_size()
-    # The second sample can compare against the first, so it reports a rate.
-    assert second["mb_per_hour"] is not None
+    seed_size_sample(1, hours_ago=1)
+    report = limits.observe_db_size()
+    assert report["size_bytes"] > 0
+    assert report["mb_per_hour"] is not None
 
 
 def test_growth_warning_fires_above_the_threshold(monkeypatch, caplog):
     from app.config import settings
 
-    limits.observe_db_size()
+    seed_size_sample(1, hours_ago=1)
     monkeypatch.setattr(settings, "db_growth_warn_mb_per_hour", -1.0)
     with caplog.at_level("WARNING", logger="sensor_board.limits"):
         report = limits.observe_db_size()
     assert report["warnings"]
     assert "MB/h" in caplog.text
+
+
+def test_no_growth_rate_is_reported_from_samples_taken_moments_apart(monkeypatch, caplog):
+    from app.config import settings
+
+    # Two restarts seconds apart would otherwise divide an ordinary WAL
+    # checkpoint by ~0 and report thousands of MB/h — which is what the first
+    # real deployment logged.
+    monkeypatch.setattr(settings, "db_growth_warn_mb_per_hour", 0.001)
+    limits.observe_db_size()
+    with caplog.at_level("WARNING", logger="sensor_board.limits"):
+        report = limits.observe_db_size()
+    assert report["mb_per_hour"] is None
+    assert "MB/h" not in caplog.text
