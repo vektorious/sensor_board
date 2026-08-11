@@ -263,3 +263,39 @@ def test_device_page_never_exposes_the_write_key():
 
 def test_dashboard_overview_states_that_dashboards_are_public():
     assert "Every dashboard here is public" in client.get("/dashboard/").text
+
+
+# --- layout and cache-busting -----------------------------------------------
+
+
+def test_total_tiles_keep_their_numbers_on_one_line():
+    body = page()
+    # Labels are short enough not to wrap, and the figure is pushed to the
+    # bottom of each tile, so one tile wrapping cannot drop its number below
+    # its neighbours'.
+    for label in (">Devices<", ">Measurements<", ">Projects<"):
+        assert label in body
+    assert body.count('class="stat-figure"') == 3
+
+
+def test_static_assets_are_version_stamped():
+    from app import __version__
+
+    body = page()
+    dashboard = client.get("/dashboard/").text
+    # Without this, a release ships new HTML that browsers render against a
+    # cached copy of the previous CSS — which is exactly what it looked like
+    # after the 0.2 deploy.
+    assert f"/static/css/style.css?v={__version__}" in body
+    assert f"/static/css/style.css?v={__version__}" in dashboard
+    assert f"/static/js/generators.js?v={__version__}" in body
+
+
+def test_version_stamped_assets_still_resolve():
+    from app import __version__
+
+    for url in (
+        f"/dashboard/static/css/style.css?v={__version__}",
+        f"/dashboard/static/js/generators.js?v={__version__}",
+    ):
+        assert client.get(url).status_code == 200

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app import queries
+from app import __version__, queries
 from app.config import settings
 
 router = APIRouter()
@@ -13,6 +13,9 @@ templates = Jinja2Templates(directory="app/templates")
 def _ctx(**extra) -> dict:
     base = {
         "app_title": settings.app_title,
+        # Stamped onto static asset URLs so a release cannot leave a browser
+        # rendering new HTML with a cached copy of the old CSS.
+        "version": __version__,
         "brand": settings.brand,
         "echarts_src": settings.echarts_src,
         "default_range_hours": settings.default_range_hours,

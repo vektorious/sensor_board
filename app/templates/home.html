@@ -40,26 +40,33 @@
 
   <section>
     <h2>On this instance right now</h2>
-    <div class="overview-grid">
+    <div class="overview-grid overview-grid--totals">
       <div class="stat">
-        <div class="stat-label">Devices, all time</div>
-        <div class="stat-value">{{ "{:,}".format(stats.devices_total) }}</div>
-        <div class="stat-sub muted">{{ "{:,}".format(stats.devices_active) }} live now</div>
+        <div class="stat-label">Devices</div>
+        <div class="stat-figure">
+          <div class="stat-value">{{ "{:,}".format(stats.devices_total) }}</div>
+          <div class="stat-sub muted">{{ "{:,}".format(stats.devices_active) }} live now</div>
+        </div>
       </div>
       <div class="stat">
-        <div class="stat-label">Measurements, all time</div>
-        <div class="stat-value">{{ "{:,}".format(stats.measurements_total) }}</div>
-        <div class="stat-sub muted">{{ "{:,}".format(stats.measurements_active) }} stored now</div>
+        <div class="stat-label">Measurements</div>
+        <div class="stat-figure">
+          <div class="stat-value">{{ "{:,}".format(stats.measurements_total) }}</div>
+          <div class="stat-sub muted">{{ "{:,}".format(stats.measurements_active) }} stored now</div>
+        </div>
       </div>
       <div class="stat">
-        <div class="stat-label">Projects, all time</div>
-        <div class="stat-value">{{ "{:,}".format(stats.projects_total) }}</div>
-        <div class="stat-sub muted">{{ "{:,}".format(stats.projects_active) }} live now</div>
+        <div class="stat-label">Projects</div>
+        <div class="stat-figure">
+          <div class="stat-value">{{ "{:,}".format(stats.projects_total) }}</div>
+          <div class="stat-sub muted">{{ "{:,}".format(stats.projects_active) }} live now</div>
+        </div>
       </div>
     </div>
     <p class="muted small">
-      All-time totals include devices and measurements that have since expired.
-      They only ever go up.
+      The large number is the all-time total — it includes devices and
+      measurements that have since expired, and only ever goes up. The line
+      beneath it is what exists right now.
     </p>
   </section>
 
@@ -321,5 +328,5 @@ void publish(float temperature, float humidity) {
 {% endblock %}
 
 {% block scripts %}
-  <script src="{{ base_path }}/static/js/generators.js"></script>
+  <script src="{{ base_path }}/static/js/generators.js?v={{ version }}"></script>
 {% endblock %}
