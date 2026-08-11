@@ -9,6 +9,7 @@ from app.database import init_db
 from app.limits import init_limits
 from app.middleware import SecurityHeadersMiddleware
 from app.routes.api import router as api_router
+from app.routes.home import router as home_router
 from app.routes.ingest import router as ingest_router
 from app.routes.web import router as web_router
 from app.retention import start_retention_sweeper
@@ -48,6 +49,12 @@ _root = settings.root_path  # "/dashboard" by default, "" to serve at the root
 app.mount(f"{_root}/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(api_router, prefix=_root)
 app.include_router(web_router, prefix=_root)
+
+# The public main page owns "/". It only exists when the dashboard sits under a
+# prefix; with ROOT_PATH="" the dashboard itself is at the root and there is no
+# room for it.
+if _root:
+    app.include_router(home_router)
 
 # Ingestion keeps its own absolute path (not under the UI prefix), so devices
 # post to a stable, clean URL regardless of where the UI is mounted.

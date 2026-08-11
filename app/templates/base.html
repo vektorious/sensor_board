@@ -9,7 +9,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="{{ base_path }}/">{{ brand }}</a>
+    <a class="brand" href="{{ home_path or (base_path ~ '/') }}">{{ brand }}</a>
     {% block header_extra %}{% endblock %}
   </header>
   <main class="container">

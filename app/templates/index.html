@@ -2,6 +2,13 @@
 {% block content %}
   <h1>Overview</h1>
 
+  <div class="notice notice--warning">
+    <strong>Every dashboard here is public.</strong>
+    Anyone who knows a device ID can read its charts. Write keys are never shown
+    on any page.{% if home_path %} See the
+    <a href="{{ home_path }}">main page</a> for how to publish your own data.{% endif %}
+  </div>
+
   <section>
     <h2>Stats</h2>
     <div class="overview-grid">

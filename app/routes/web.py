@@ -19,6 +19,9 @@ def _ctx(**extra) -> dict:
         # URL prefix the UI is mounted under; templates/JS prepend it to links
         # and fetches. "" at root, "/dashboard" when mounted there.
         "base_path": settings.root_path,
+        # The main page, when there is one. It only exists if the dashboard is
+        # mounted under a prefix — otherwise the dashboard itself owns "/".
+        "home_path": "/" if settings.root_path else None,
     }
     base.update(extra)
     return base

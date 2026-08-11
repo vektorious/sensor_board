@@ -4,8 +4,10 @@ from datetime import datetime, timedelta, UTC
 from sqlalchemy import and_, func
 from sqlmodel import select
 
+from app import retention
+from app.config import settings
 from app.database import get_session
-from app.models import Reading
+from app.models import Device, Reading
 from app.sensors import meta_for, sort_key
 
 
@@ -98,21 +100,49 @@ def list_devices(project: str | None = None) -> list[dict]:
 
 
 def device_info(device_id: str) -> dict | None:
-    """Identity/metadata for a single device, or None if unknown."""
+    """Identity, activity, and expiry state for one device, or None if unknown.
+
+    Reads both tables: `devices` owns identity and expiry (it is what the
+    sweeper acts on), while the newest reading supplies the display name and
+    project, which always reflect the most recent write.
+    """
     with get_session() as s:
+        device = s.exec(
+            select(Device).where(Device.device_id == device_id)
+        ).first()
+        if device is None:
+            return None
         latest = s.exec(
             select(Reading)
             .where(Reading.device_id == device_id)
             .order_by(Reading.timestamp.desc())
         ).first()
-    if latest is None:
-        return None
-    return {
-        "device_id": device_id,
-        "device_name": latest.device_name,
-        "project": latest.project,
-        "last_seen": latest.timestamp,
-    }
+
+        last_seen = device.last_seen_at
+        if last_seen.tzinfo is None:  # SQLite round-trips without a zone
+            last_seen = last_seen.replace(tzinfo=UTC)
+
+        expires_at = None
+        if not device.persistent and settings.retention_hours > 0:
+            expires_at = last_seen + timedelta(
+                hours=retention.retention_hours_for(device)
+            )
+
+        return {
+            "device_id": device_id,
+            "device_name": latest.device_name if latest else None,
+            "project": latest.project if latest else None,
+            "last_seen": last_seen,
+            "persistent": device.persistent,
+            "expires_at": expires_at,
+            # Hours left before the sweeper may delete this device, so the page
+            # can warn before the data disappears rather than after (§17).
+            "expires_in_hours": (
+                max(0.0, (expires_at - datetime.now(UTC)).total_seconds() / 3600)
+                if expires_at
+                else None
+            ),
+        }
 
 
 def device_sensors(device_id: str) -> list[dict]:

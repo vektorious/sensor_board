@@ -12,6 +12,13 @@
       <h1>{{ info.device_name if info and info.device_name else device_id }}</h1>
       <div class="card-meta mono">{{ device_id }}</div>
       <div class="card-meta muted">last seen {{ info.last_seen.strftime('%Y-%m-%d %H:%M UTC') if info and info.last_seen else '—' }}</div>
+      {% if info and info.expires_at %}
+        <div class="card-meta {{ 'expiry-warning' if info.expires_in_hours < 12 else 'muted' }}">
+          expires {{ info.expires_at.strftime('%Y-%m-%d %H:%M UTC') }}
+          ({{ '%.0f'|format(info.expires_in_hours) }}h left) — send a
+          measurement to reset the clock
+        </div>
+      {% endif %}
     </div>
     <div class="range-control" id="range-control" role="group" aria-label="Time range">
       <button data-hours="24">24h</button>
@@ -20,6 +27,15 @@
       <button data-hours="0">All</button>
     </div>
   </div>
+
+  {% if not info %}
+    <div class="notice notice--warning">
+      <strong>No such device.</strong>
+      Either this device ID has never published anything, or it expired and was
+      deleted along with its measurements. Expired IDs are free to claim again —
+      see the <a href="{{ home_path or '/' }}">main page</a>.
+    </div>
+  {% endif %}
 
   <div id="overview" class="overview-grid"
        data-device-id="{{ device_id }}"
