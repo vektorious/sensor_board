@@ -8,7 +8,7 @@ Generic JSON contract (no domain-specific wording):
     {
       "project": "workshop-2026",         # optional, groups devices
       "name": "Basil #3",                 # optional, human label
-      "device_uuid": "a1b2c3d4",          # required, user-defined
+      "device_id": "a1b2c3d4",          # required, user-defined
       "sensors": {
         "temperature": {"value": 21.4, "unit": "C"},
         "moisture_pct": {"value": 62.0},
@@ -21,7 +21,7 @@ that submitted it (never the plaintext key). An optional per-entry "plot" field
 is stored for the future plot-style feature and otherwise ignored.
 
 Errors are descriptive JSON: 401 (bad/missing key), 413 (payload too large),
-400 (malformed JSON, missing/empty sensors, missing device_uuid, non-numeric
+400 (malformed JSON, missing/empty sensors, missing device_id, non-numeric
 value). Every request is logged with a short key-hash prefix — no plaintext key.
 """
 import json
@@ -30,19 +30,21 @@ from datetime import datetime, UTC
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from sqlmodel import select
 
+from app import metrics
 from app.config import settings
 from app.database import get_session
-from app.models import Reading
+from app.models import Device, Reading
 from app.security import hash_api_key
 
 router = APIRouter()
 logger = logging.getLogger("sensor_board.ingest")
 
 # Shown in error responses to nudge testers toward a valid payload. Uses the
-# real field names (device_uuid, sensors) — bare numeric sensor values are fine.
+# real field names (device_id, sensors) — bare numeric sensor values are fine.
 _EXAMPLE = {
-    "device_uuid": "workbench-sensor-01",
+    "device_id": "workbench-sensor-01",
     "sensors": {"temperature": 22.4, "humidity": 51},
 }
 
@@ -102,14 +104,14 @@ async def ingest(request: Request):
         )
 
     # --- validation ---
-    device_uuid = data.get("device_uuid")
-    log["device"] = device_uuid
-    if not device_uuid:
+    device_id = data.get("device_id")
+    log["device"] = device_id
+    if not device_id:
         return finish(
             400,
             {
-                "error": "Missing device_uuid",
-                "hint": "Include a user-defined device_uuid identifying the device.",
+                "error": "Missing device_id",
+                "hint": "Include a user-defined device_id identifying the device.",
                 "example": _EXAMPLE,
             },
             error="missing_device",
@@ -161,11 +163,39 @@ async def ingest(request: Request):
     name = data.get("name")
     timestamp = datetime.now(UTC)
     with get_session() as session:
+        # Every reading points at a device row (FK), so make sure one exists.
+        # Ownership rules land in the next change; for now a device created via
+        # an API key is persistent and keyless, matching pre-0.2 behaviour.
+        device = session.exec(
+            select(Device).where(Device.device_id == device_id)
+        ).first()
+        if device is None:
+            device = Device(
+                device_id=device_id,
+                persistent=True,
+                policy="trusted",
+                created_by_key_hash=key_hash,
+                created_at=timestamp,
+                last_seen_at=timestamp,
+            )
+            metrics.bump(session, "devices_total")
+        else:
+            device.last_seen_at = timestamp
+        session.add(device)
+
+        # A project exists as soon as some reading names it, so it is "new"
+        # exactly when no reading names it yet.
+        if project is not None and not session.exec(
+            select(Reading.id).where(Reading.project == project).limit(1)
+        ).first():
+            metrics.bump(session, "projects_total")
+        metrics.bump(session, "measurements_total", len(rows))
+
         for sensor_type, value, unit, plot in rows:
             session.add(
                 Reading(
                     project=project,
-                    device_uuid=device_uuid,
+                    device_id=device_id,
                     device_name=name,
                     timestamp=timestamp,
                     sensor_type=sensor_type,

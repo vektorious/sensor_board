@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{{ (info.device_name if info else device_uuid) }} · {{ app_title }}{% endblock %}
+{% block title %}{{ (info.device_name if info else device_id) }} · {{ app_title }}{% endblock %}
 {% block content %}
   <nav class="crumbs">
     <a href="{{ base_path }}/">Overview</a>
     {% if info and info.project %}/ <a href="{{ base_path }}/project/{{ info.project }}">{{ info.project }}</a>{% endif %}
-    / <span>{{ info.device_name if info else device_uuid }}</span>
+    / <span>{{ info.device_name if info else device_id }}</span>
   </nav>
 
   <div class="device-head">
     <div>
-      <h1>{{ info.device_name if info and info.device_name else device_uuid }}</h1>
-      <div class="card-meta mono">{{ device_uuid }}</div>
+      <h1>{{ info.device_name if info and info.device_name else device_id }}</h1>
+      <div class="card-meta mono">{{ device_id }}</div>
       <div class="card-meta muted">last seen {{ info.last_seen.strftime('%Y-%m-%d %H:%M UTC') if info and info.last_seen else '—' }}</div>
     </div>
     <div class="range-control" id="range-control" role="group" aria-label="Time range">
@@ -22,7 +22,7 @@
   </div>
 
   <div id="overview" class="overview-grid"
-       data-uuid="{{ device_uuid }}"
+       data-device-id="{{ device_id }}"
        data-base="{{ base_path }}"
        data-default-hours="{{ default_range_hours }}"></div>
 

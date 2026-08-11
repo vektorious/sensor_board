@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta  # noqa: E402
 
 from app import retention  # noqa: E402
 from app.database import get_session, init_db  # noqa: E402
-from app.models import Reading  # noqa: E402
+from app.models import Device, Reading  # noqa: E402
 from app.queries import list_devices, list_projects  # noqa: E402
 
 init_db()
@@ -28,14 +28,27 @@ P = "rt-"  # id prefix to isolate this test's rows from other tests' rows
 
 def _seed():
     rows = [
-        Reading(project=P + "old", device_uuid=P + "stale-solo", timestamp=OLD, sensor_type="t", value=1.0),
-        Reading(project=P + "mixed", device_uuid=P + "stale-mix", timestamp=OLD, sensor_type="t", value=1.0),
-        Reading(project=P + "mixed", device_uuid=P + "fresh-mix", timestamp=FRESH, sensor_type="t", value=2.0),
-        Reading(project=P + "exdev", device_uuid=P + "keep-dev", timestamp=OLD, sensor_type="t", value=1.0),
-        Reading(project=P + "keep", device_uuid=P + "stale-exproj", timestamp=OLD, sensor_type="t", value=1.0),
-        Reading(project=P + "active", device_uuid=P + "fresh", timestamp=FRESH, sensor_type="t", value=3.0),
+        Reading(project=P + "old", device_id=P + "stale-solo", timestamp=OLD, sensor_type="t", value=1.0),
+        Reading(project=P + "mixed", device_id=P + "stale-mix", timestamp=OLD, sensor_type="t", value=1.0),
+        Reading(project=P + "mixed", device_id=P + "fresh-mix", timestamp=FRESH, sensor_type="t", value=2.0),
+        Reading(project=P + "exdev", device_id=P + "keep-dev", timestamp=OLD, sensor_type="t", value=1.0),
+        Reading(project=P + "keep", device_id=P + "stale-exproj", timestamp=OLD, sensor_type="t", value=1.0),
+        Reading(project=P + "active", device_id=P + "fresh", timestamp=FRESH, sensor_type="t", value=3.0),
     ]
     with get_session() as s:
+        # Readings carry a foreign key into devices, so the owning rows have to
+        # exist first. All temporary (non-persistent) so the sweeper considers
+        # them; exemptions are what protects the ones that must survive.
+        for r in rows:
+            s.add(
+                Device(
+                    device_id=r.device_id,
+                    persistent=False,
+                    created_at=r.timestamp,
+                    last_seen_at=r.timestamp,
+                )
+            )
+        s.commit()
         s.add_all(rows)
         s.commit()
 
@@ -59,7 +72,7 @@ def test_purge_deletes_unexempt_stale_and_removes_emptied_projects():
     assert P + "old" in report["removed_projects"]
     assert P + "mixed" not in report["removed_projects"]
 
-    devices = {d["device_uuid"] for d in list_devices()}
+    devices = {d["device_id"] for d in list_devices()}
     assert P + "stale-solo" not in devices
     assert P + "stale-mix" not in devices
     # Fresh, exempt-by-device, and exempt-by-project devices all survive.

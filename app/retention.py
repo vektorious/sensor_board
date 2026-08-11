@@ -29,7 +29,7 @@ from sqlmodel import select
 
 from app.config import settings
 from app.database import get_session
-from app.models import Reading
+from app.models import Device, Reading
 
 log = logging.getLogger("sensor_board.retention")
 
@@ -72,18 +72,18 @@ def purge_stale(
         # join carries the device's latest project for exemption checks.
         latest_ts = (
             select(
-                Reading.device_uuid,
+                Reading.device_id,
                 func.max(Reading.timestamp).label("mts"),
             )
-            .group_by(Reading.device_uuid)
+            .group_by(Reading.device_id)
             .subquery()
         )
         stale_rows = s.exec(
-            select(Reading.device_uuid, Reading.project)
+            select(Reading.device_id, Reading.project)
             .join(
                 latest_ts,
                 and_(
-                    Reading.device_uuid == latest_ts.c.device_uuid,
+                    Reading.device_id == latest_ts.c.device_id,
                     Reading.timestamp == latest_ts.c.mts,
                 ),
             )
@@ -100,7 +100,10 @@ def purge_stale(
         )
 
         if stale:
-            s.exec(delete(Reading).where(Reading.device_uuid.in_(stale)))
+            s.exec(delete(Reading).where(Reading.device_id.in_(stale)))
+            # The device row is the thing that owns the ID, so it has to go too
+            # — otherwise the ID stays claimed with no data behind it.
+            s.exec(delete(Device).where(Device.device_id.in_(stale)))
             s.commit()
             projects_after = set(
                 s.exec(

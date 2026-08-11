@@ -15,7 +15,7 @@ def overview_stats() -> dict:
     with get_session() as s:
         measurements = s.exec(select(func.count(Reading.id))).one()
         devices = s.exec(
-            select(func.count(func.distinct(Reading.device_uuid)))
+            select(func.count(func.distinct(Reading.device_id)))
         ).one()
         projects = s.exec(
             select(func.count(func.distinct(Reading.project))).where(
@@ -23,7 +23,7 @@ def overview_stats() -> dict:
             )
         ).one()
         active_24h = s.exec(
-            select(func.count(func.distinct(Reading.device_uuid))).where(
+            select(func.count(func.distinct(Reading.device_id))).where(
                 Reading.timestamp >= cutoff
             )
         ).one()
@@ -43,7 +43,7 @@ def list_projects() -> list[dict]:
         rows = s.exec(
             select(
                 Reading.project,
-                func.count(func.distinct(Reading.device_uuid)),
+                func.count(func.distinct(Reading.device_id)),
                 func.max(Reading.timestamp),
             )
             .where(Reading.project.is_not(None))
@@ -64,17 +64,17 @@ def list_devices(project: str | None = None) -> list[dict]:
     """
     with get_session() as s:
         latest_ts = select(
-            Reading.device_uuid,
+            Reading.device_id,
             func.max(Reading.timestamp).label("mts"),
         )
         if project is not None:
             latest_ts = latest_ts.where(Reading.project == project)
-        latest_ts = latest_ts.group_by(Reading.device_uuid).subquery()
+        latest_ts = latest_ts.group_by(Reading.device_id).subquery()
 
         stmt = select(Reading).join(
             latest_ts,
             and_(
-                Reading.device_uuid == latest_ts.c.device_uuid,
+                Reading.device_id == latest_ts.c.device_id,
                 Reading.timestamp == latest_ts.c.mts,
             ),
         )
@@ -82,40 +82,40 @@ def list_devices(project: str | None = None) -> list[dict]:
             stmt = stmt.where(Reading.project == project)
         rows = s.exec(stmt).all()
 
-    # Dedupe on device_uuid (guards against tied timestamps) and sort by uuid.
-    by_uuid: dict[str, dict] = {}
+    # Dedupe on device_id (guards against tied timestamps) and sort by ID.
+    by_device: dict[str, dict] = {}
     for r in rows:
-        by_uuid.setdefault(
-            r.device_uuid,
+        by_device.setdefault(
+            r.device_id,
             {
-                "device_uuid": r.device_uuid,
+                "device_id": r.device_id,
                 "device_name": r.device_name,
                 "project": r.project,
                 "last_seen": r.timestamp,
             },
         )
-    return [by_uuid[u] for u in sorted(by_uuid)]
+    return [by_device[u] for u in sorted(by_device)]
 
 
-def device_info(device_uuid: str) -> dict | None:
+def device_info(device_id: str) -> dict | None:
     """Identity/metadata for a single device, or None if unknown."""
     with get_session() as s:
         latest = s.exec(
             select(Reading)
-            .where(Reading.device_uuid == device_uuid)
+            .where(Reading.device_id == device_id)
             .order_by(Reading.timestamp.desc())
         ).first()
     if latest is None:
         return None
     return {
-        "device_uuid": device_uuid,
+        "device_id": device_id,
         "device_name": latest.device_name,
         "project": latest.project,
         "last_seen": latest.timestamp,
     }
 
 
-def device_sensors(device_uuid: str) -> list[dict]:
+def device_sensors(device_id: str) -> list[dict]:
     """Every sensor a device has reported, with presentation meta + latest value.
 
     This is what drives auto-population: the panel list is derived from the data,
@@ -129,7 +129,7 @@ def device_sensors(device_uuid: str) -> list[dict]:
                 Reading.sensor_type,
                 func.max(Reading.timestamp).label("mts"),
             )
-            .where(Reading.device_uuid == device_uuid)
+            .where(Reading.device_id == device_id)
             .group_by(Reading.sensor_type)
             .subquery()
         )
@@ -142,7 +142,7 @@ def device_sensors(device_uuid: str) -> list[dict]:
                     Reading.timestamp == latest_ts.c.mts,
                 ),
             )
-            .where(Reading.device_uuid == device_uuid)
+            .where(Reading.device_id == device_id)
         ).all()
 
     panels = []
@@ -182,7 +182,7 @@ def project_series(project: str, sensor_type: str, hours: int) -> list[dict]:
     """
     with get_session() as s:
         stmt = select(
-            Reading.device_uuid,
+            Reading.device_id,
             Reading.device_name,
             Reading.timestamp,
             Reading.value,
@@ -193,30 +193,34 @@ def project_series(project: str, sensor_type: str, hours: int) -> list[dict]:
         if hours and hours > 0:
             cutoff = datetime.now(UTC) - timedelta(hours=hours)
             stmt = stmt.where(Reading.timestamp >= cutoff)
-        stmt = stmt.order_by(Reading.device_uuid, Reading.timestamp)
+        stmt = stmt.order_by(Reading.device_id, Reading.timestamp)
         rows = s.exec(stmt).all()
 
     grouped: dict[str, dict] = {}
-    for uuid, name, ts, value in rows:
+    for device_id, name, ts, value in rows:
         if value is None:
             continue
-        g = grouped.get(uuid)
+        g = grouped.get(device_id)
         if g is None:
-            g = grouped[uuid] = {"device_uuid": uuid, "device_name": uuid, "points": []}
+            g = grouped[device_id] = {
+                "device_id": device_id,
+                "device_name": device_id,
+                "points": [],
+            }
         if name:  # rows are ascending by ts, so the last non-null name wins
             g["device_name"] = name
         g["points"].append([ts.isoformat(), value])
     return [g for g in grouped.values() if g["points"]]
 
 
-def series(device_uuid: str, sensor_type: str, hours: int) -> list[list]:
+def series(device_id: str, sensor_type: str, hours: int) -> list[list]:
     """Time-ordered [iso_timestamp, value] points within the lookback window.
 
     hours <= 0 means "all history".
     """
     with get_session() as s:
         stmt = select(Reading.timestamp, Reading.value).where(
-            Reading.device_uuid == device_uuid,
+            Reading.device_id == device_id,
             Reading.sensor_type == sensor_type,
         )
         if hours and hours > 0:

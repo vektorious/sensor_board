@@ -46,10 +46,10 @@ def project_dashboard(request: Request, slug: str):
     )
 
 
-@router.get("/device/{device_uuid}", response_class=HTMLResponse)
-def device_dashboard(request: Request, device_uuid: str):
+@router.get("/device/{device_id}", response_class=HTMLResponse)
+def device_dashboard(request: Request, device_id: str):
     return templates.TemplateResponse(
         request,
         "device.html",
-        _ctx(device_uuid=device_uuid, info=queries.device_info(device_uuid)),
+        _ctx(device_id=device_id, info=queries.device_info(device_id)),
     )

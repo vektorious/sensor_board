@@ -24,9 +24,9 @@
   {% if devices %}
   <div class="card-grid">
     {% for d in devices %}
-    <a class="card link-card" href="{{ base_path }}/device/{{ d.device_uuid }}">
-      <div class="card-title">{{ d.device_name or d.device_uuid }}</div>
-      <div class="card-meta mono">{{ d.device_uuid }}</div>
+    <a class="card link-card" href="{{ base_path }}/device/{{ d.device_id }}">
+      <div class="card-title">{{ d.device_name or d.device_id }}</div>
+      <div class="card-meta mono">{{ d.device_id }}</div>
       <div class="card-meta muted">last seen {{ d.last_seen.strftime('%Y-%m-%d %H:%M UTC') if d.last_seen else '—' }}</div>
     </a>
     {% endfor %}
