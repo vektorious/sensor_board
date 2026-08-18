@@ -64,6 +64,25 @@ supervisorctl status sensor_board      # should show RUNNING
 Logs: `~/sensor_board/errors.log` and `access.log`. Restart after a config change
 with `supervisorctl restart sensor_board`.
 
+### Check the proxy address
+
+The app is only ever reached through the Uberspace web frontend, so the TCP peer
+is that proxy and not the device. `conf.py` trusts `X-Forwarded-For` from one
+specific address to recover the real client IP — which is what the per-IP rate
+limits key on. Get it wrong and every client silently shares one identity again,
+turning those per-IP limits into global ones.
+
+The default is `100.65.24.1`. Confirm it matches your host:
+
+```bash
+awk '{print $4}' ~/sensor_board/access.log | cut -d: -f1 | sort | uniq -c
+```
+
+Before the fix is deployed, every line shows the proxy — one address for all
+traffic, including your own browser. After restarting you should see a spread of
+real client addresses instead; if it stays a single address, the header is not
+being trusted and `FORWARDED_ALLOW_IPS` in `.env` needs the value you just found.
+
 ## 4. Route your domain
 
 Three paths belong to the app: the main page at `/`, the dashboard under

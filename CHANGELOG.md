@@ -5,6 +5,23 @@ All notable changes to Sensor Board are documented here. The project follows
 ingestion contract may change between minor releases — breaking changes are
 called out explicitly.
 
+## [Unreleased]
+
+### Fixed
+
+- **Every request was attributed to the reverse proxy, not the client.** Behind
+  the Uberspace frontend the TCP peer is always that proxy, so
+  `request.client.host` returned one address for all traffic and the per-IP
+  limits — request rate, daily cap, device-creation cap — behaved as global caps
+  shared by everyone. `conf.py` now trusts `X-Forwarded-For` from the proxy
+  address only (`FORWARDED_ALLOW_IPS`, never `*`).
+- **The access log had no timestamps.** Gunicorn's `access_log_format` is
+  ignored under `UvicornWorker`, and uvicorn's own formatter emits only
+  `client - "request" status`, which made the file useless for establishing when
+  anything happened. Both logs are now timestamped, and the app's per-request
+  `ingest ts=…` line is attached to `errors.log` explicitly instead of relying
+  on propagation.
+
 ## [0.2.1] — 2026-08-11
 
 ### Fixed
