@@ -136,6 +136,13 @@ Anonymous defaults (start tight, loosen with real traffic):
 | Active devices, per IP | 10 |
 | Write budget, per credential | 3 rows/s, burst 300 |
 
+The write budget is the one limit that is not per device. It is charged **per
+credential and in stored values**, so every device sharing an API key draws from
+the same bucket at `devices x sensors_per_reading / interval` rows per second. A
+class of 80 devices sending 8 sensors every 5 minutes costs 2.1 rows/s; the same
+class every 60 s costs 10.7 and gets shed. See `.env.example` for a worked
+workshop policy.
+
 Platform-wide, on top of those: a write budget of 10 rows/s (burst 1,000), a
 1 GB database warning, and a hard 2 GB ceiling above which ingestion returns
 `503`. The DB thresholds assume a 10 GB host quota — **scale them to yours**.
