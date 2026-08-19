@@ -28,11 +28,28 @@ SENSORS: dict[str, dict] = {
     "ir":              {"label": "IR Light",      "unit": "",    "chart": "line"},
     "full":            {"label": "Full Spectrum", "unit": "",    "chart": "line"},
     "pump_duration":   {"label": "Pump Runtime",  "unit": "s",   "chart": "line"},
+    # BME680 + Bosch BSEC2 (smart_home_sensor). Without these the humanizer
+    # renders "Iaq", "Iaq Accuracy" and "Co2 Equivalent", which reads as a typo
+    # rather than an acronym.
+    "iaq":             {"label": "Air Quality (IAQ)", "unit": "",  "chart": "line", "min": 0, "max": 500},
+    # 0-3. Below 3 the IAQ number is not yet trustworthy, so it is worth
+    # charting next to it rather than hiding as a diagnostic.
+    "iaq_accuracy":    {"label": "IAQ Accuracy",   "unit": "",    "chart": "line", "min": 0, "max": 3},
+    # Estimated from VOC by BSEC, not a real CO2 measurement — the label says
+    # "equivalent" for that reason and should not be shortened to "CO₂".
+    "co2_equivalent":  {"label": "CO₂ equivalent", "unit": "ppm", "chart": "line"},
+    "voc_equivalent":  {"label": "VOC equivalent", "unit": "ppm", "chart": "line"},
 }
 
 # Sensors listed here sort to the front (in this order); everything else follows
 # alphabetically. Drives panel/overview ordering on device and project pages.
-SENSOR_ORDER: list[str] = ["temperature", "humidity", "moisture_pct"]
+# IAQ leads where it exists: it is the headline reading of an air-quality
+# device. Devices without it are unaffected — the entries they do have keep
+# their relative order.
+SENSOR_ORDER: list[str] = [
+    "iaq", "iaq_accuracy", "temperature", "humidity", "moisture_pct",
+    "co2_equivalent", "voc_equivalent",
+]
 
 
 def sort_key(sensor_type: str) -> tuple:
