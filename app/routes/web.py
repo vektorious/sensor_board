@@ -3,11 +3,12 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app import __version__, queries
+from app import __version__, queries, legal
 from app.config import settings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["legal_pages"] = legal.available
 
 
 def _ctx(**extra) -> dict:

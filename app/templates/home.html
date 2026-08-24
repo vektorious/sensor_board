@@ -323,9 +323,13 @@ void publish(float temperature, float humidity) {
       {{ brand }} v{{ version }} ·
       <a href="{{ dashboard_path }}">Dashboard</a>
       {% if feedback_url %} · <a href="{{ feedback_url }}">Report a problem or request a feature</a>{% endif %}
+      {% for slug, title in legal_pages().items() %} · <a href="/{{ slug }}">{{ title }}</a>{% endfor %}
     </p>
   </footer>
 {% endblock %}
+
+{# This page carries its own footer, so the inherited one would be a second. #}
+{% block footer %}{% endblock %}
 
 {% block scripts %}
   <script src="{{ base_path }}/static/js/generators.js?v={{ version }}"></script>

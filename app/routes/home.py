@@ -13,13 +13,14 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app import __version__, metrics
+from app import __version__, metrics, legal
 from app.config import settings
 from app.policies import registry
 from app.validation import MAX_UNIT_LENGTH, SUPPORTED_PLOTS
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["legal_pages"] = legal.available
 
 
 def _ingest_url() -> str:

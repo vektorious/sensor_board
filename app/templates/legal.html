@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · {{ app_title }}{% endblock %}
+{% block content %}
+  <h1>{{ heading }}</h1>
+  {# The fragment is written by the operator, not by a visitor, so it is
+     inserted as markup rather than escaped text. #}
+  <div class="legal-body">{{ body|safe }}</div>
+{% endblock %}
