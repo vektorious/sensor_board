@@ -15,8 +15,8 @@
       {% if info and info.expires_at %}
         <div class="card-meta {{ 'expiry-warning' if info.expires_in_hours < 12 else 'muted' }}">
           expires {{ info.expires_at.strftime('%Y-%m-%d %H:%M UTC') }}
-          ({{ '%.0f'|format(info.expires_in_hours) }}h left) — send a
-          measurement to reset the clock
+          ({{ '%.0f'|format(info.expires_in_hours) }}h left, send a
+          measurement to reset the clock)
         </div>
       {% endif %}
     </div>
