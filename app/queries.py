@@ -12,8 +12,12 @@ from app.sensors import meta_for, sort_key
 
 
 def overview_stats() -> dict:
-    """At-a-glance totals for the overview page."""
-    cutoff = datetime.now(UTC) - timedelta(hours=24)
+    """At-a-glance totals for the overview page.
+
+    Every count here is implicitly "active": retention deletes an idle device
+    along with its readings, so a device that has stopped publishing leaves the
+    table entirely rather than lingering as a zero.
+    """
     with get_session() as s:
         measurements = s.exec(select(func.count(Reading.id))).one()
         devices = s.exec(
@@ -24,17 +28,11 @@ def overview_stats() -> dict:
                 Reading.project.is_not(None)
             )
         ).one()
-        active_24h = s.exec(
-            select(func.count(func.distinct(Reading.device_id))).where(
-                Reading.timestamp >= cutoff
-            )
-        ).one()
         last_seen = s.exec(select(func.max(Reading.timestamp))).one()
     return {
         "devices": devices or 0,
         "measurements": measurements or 0,
         "projects": projects or 0,
-        "active_24h": active_24h or 0,
         "last_seen": last_seen,
     }
 

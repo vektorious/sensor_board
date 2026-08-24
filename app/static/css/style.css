@@ -65,6 +65,8 @@ h1 { font-size: 1.6rem; margin: 0 0 4px; }
 h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--text-secondary); font-weight: 600; }
 
 .muted { color: var(--text-muted); }
+/* Qualifier after a section heading: same line, visibly subordinate to it. */
+.h2-note { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); }
 .mono  { font-family: var(--mono); font-size: 0.85em; color: var(--text-secondary); }
 
 .crumbs { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }

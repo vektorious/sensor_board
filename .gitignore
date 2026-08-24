@@ -7,6 +7,9 @@ venv/
 app/data/*.db
 app/data/*.db-wal
 app/data/*.db-shm
+# Init lock (app/database.py): created next to the database at startup, so it
+# lands in the same directory as the ignored .db files but did not match them.
+app/data/*.init.lock
 .idea/
 
 CLAUDE.md

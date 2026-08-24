@@ -10,12 +10,11 @@
   </div>
 
   <section>
-    <h2>Stats</h2>
+    <h2>Stats <span class="h2-note">(active devices and projects)</span></h2>
     <div class="overview-grid">
       <div class="stat"><div class="stat-label">Devices</div><div class="stat-value">{{ stats.devices }}</div></div>
       <div class="stat"><div class="stat-label">Measurements</div><div class="stat-value">{{ "{:,}".format(stats.measurements) }}</div></div>
       <div class="stat"><div class="stat-label">Projects</div><div class="stat-value">{{ stats.projects }}</div></div>
-      <div class="stat"><div class="stat-label">Active Devices (24)</div><div class="stat-value">{{ stats.active_24h }}</div></div>
       <div class="stat">
         <div class="stat-label">Last reading</div>
         <div class="stat-value stat-value--sm">{{ stats.last_seen.strftime('%Y-%m-%d %H:%M') if stats.last_seen else '—' }}</div>

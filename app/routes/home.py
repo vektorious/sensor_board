@@ -55,7 +55,7 @@ def _limits_table() -> list[dict]:
 ERROR_CODES = [
     ("400", "missing_device_id / invalid_device_id", "No device_id, or one with characters outside A–Z a–z 0–9 _ -"),
     ("400", "missing_sensors / empty_sensors", "No sensors object, or an empty one"),
-    ("400", "invalid_value", "A value that is not a number, boolean, short string, or null — NaN and infinity included"),
+    ("400", "invalid_value", "A value that is not a number, boolean, short string, or null (NaN and infinity included)"),
     ("400", "unknown_field", "A field the endpoint does not accept, including timestamp"),
     ("401", "missing_write_key", "The device has a write key and the request did not present it"),
     ("401", "api_key_required", "The device ID is claimed by a keyless API-key device"),

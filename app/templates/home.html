@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ app_title }} — publish sensor data from anything{% endblock %}
+{% block title %}{{ app_title }}: publish sensor data from anything{% endblock %}
 
 {% block header_extra %}
   <nav class="header-nav">
@@ -32,7 +32,7 @@
   <div class="notice notice--warning">
     <strong>Beta, and public.</strong>
     Every dashboard on this instance is readable by anyone who knows the device
-    ID — there are no private dashboards yet. Anonymous devices and all their
+    ID. There are no private dashboards yet. Anonymous devices and all their
     measurements are deleted after {{ retention_hours }} hours without a
     successful write. Don't publish anything here you would mind other people
     reading, and don't rely on this as your only copy of the data.
@@ -64,7 +64,7 @@
       </div>
     </div>
     <p class="muted small">
-      The large number is the all-time total — it includes devices and
+      The large number is the all-time total: it includes devices and
       measurements that have since expired, and only ever goes up. The line
       beneath it is what exists right now.
     </p>
@@ -96,7 +96,7 @@
         <p class="muted small">
           Public, like a username. It appears in your dashboard URL, so anyone
           who has it can read your charts. Use letters, digits, hyphens, and
-          underscores — or take a random one.
+          underscores, or take a random one.
         </p>
         <div class="generator-row">
           <input type="text" data-output placeholder="dev-…" aria-label="Device ID">
@@ -108,7 +108,7 @@
       <div class="generator card" data-generator="write-key">
         <h3>Write key</h3>
         <p class="muted small">
-          Secret, like a password — it is the only thing stopping someone else
+          Secret, like a password. It is the only thing stopping someone else
           writing to your device. Generated locally with
           <code>crypto.getRandomValues</code>, about 187 bits of entropy.
         </p>
@@ -131,7 +131,7 @@
     <h2>2. Send a measurement</h2>
     <p>
       One <code>POST</code> to <code class="mono">{{ ingest_path }}</code>. Each
-      entry in <code>sensors</code> becomes a chart named after its key — send a
+      entry in <code>sensors</code> becomes a chart named after its key. Send a
       new one whenever you like and it appears on its own.
     </p>
 
@@ -230,7 +230,7 @@ void publish(float temperature, float humidity) {
     <h2>3. Look after your key</h2>
     <ul class="prose-list">
       <li>
-        <strong>Send the write key in the request body, over HTTPS</strong> —
+        <strong>Send the write key in the request body, over HTTPS</strong>,
         never in the URL. Query strings end up in proxy logs and browser
         history; the body does not.
       </li>
@@ -245,7 +245,7 @@ void publish(float temperature, float humidity) {
       </li>
       <li>
         <strong>The device ID is not a secret</strong> and gives no write
-        access — but knowing it is enough to read the dashboard.
+        access, but knowing it is enough to read the dashboard.
       </li>
       <li>
         <strong>API keys are for operators.</strong> If you were issued one,
@@ -265,7 +265,7 @@ void publish(float temperature, float humidity) {
       </li>
       <li>
         The device ID then becomes free for anyone to claim again. A reclaimed
-        ID starts empty — none of the previous owner's data is visible.
+        ID starts empty: none of the previous owner's data is visible.
       </li>
       <li>
         Devices created with an API key are permanent and are not swept.
