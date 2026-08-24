@@ -16,3 +16,8 @@ docs/future-auth-model.md
 
 # Local development notes — not for publication
 notes/
+
+# Impressum / privacy fragments: operator-specific, and they carry a real name
+# and postal address. Published per instance, never in the repository.
+# See app/legal.py and DEPLOY.md.
+app/legal/

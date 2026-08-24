@@ -61,7 +61,18 @@ supervisorctl update
 supervisorctl status sensor_board      # should show RUNNING
 ```
 
-Logs: `~/sensor_board/errors.log` and `access.log`. Restart after a config change
+Logs: `~/sensor_board/errors.log` and `access.log`. **Set up rotation** — the
+access log contains IP addresses, and the privacy notice promises they are gone
+within 30 days:
+
+```bash
+mkdir -p ~/etc/logrotate.d
+cp deploy/uberspace/logrotate-sensor_board.conf ~/etc/logrotate.d/sensor_board.conf
+crontab -e   # 17 4 * * * /usr/sbin/logrotate -s "$HOME/.logrotate.state" "$HOME/etc/logrotate.d/sensor_board.conf"
+/usr/sbin/logrotate -d -s ~/.logrotate.state ~/etc/logrotate.d/sensor_board.conf   # dry run
+```
+
+Restart after a config change
 with `supervisorctl restart sensor_board`.
 
 ### Check the proxy address
@@ -226,3 +237,25 @@ In each device's WiFiManager setup portal set:
 
 Existing firmware defaults (`DEFAULT_API_URL`) can also be updated to the new
 domain so freshly-flashed devices use it out of the box.
+
+
+## Impressum and privacy notice
+
+Both pages are served from `LEGAL_DIR` (default `app/legal/`) and are **not in
+the repository**: they carry a real name and postal address, and they differ for
+every operator. An instance without them simply has no such pages and no footer
+links.
+
+```bash
+mkdir -p ~/sensor_board/app/legal
+nano ~/sensor_board/app/legal/impressum.html   # HTML fragment, no <html> wrapper
+nano ~/sensor_board/app/legal/privacy.html
+```
+
+They appear at `/impressum` and `/privacy`, are linked in the footer of every
+page, and are picked up without a restart. Only those two slugs are served, so a
+file with any other name is ignored.
+
+Whatever the notice claims must match the deployment. In particular the log
+retention above, the 48-hour device expiry (`RETENTION_HOURS`), and the fact
+that submitted device data is public.

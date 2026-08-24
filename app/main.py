@@ -11,6 +11,7 @@ from app.middleware import SecurityHeadersMiddleware
 from app.routes.api import router as api_router
 from app.routes.home import router as home_router
 from app.routes.ingest import router as ingest_router
+from app.routes.legal import router as legal_router
 from app.routes.web import router as web_router
 from app.retention import start_retention_sweeper
 
@@ -59,3 +60,8 @@ if _root:
 # Ingestion keeps its own absolute path (not under the UI prefix), so devices
 # post to a stable, clean URL regardless of where the UI is mounted.
 app.include_router(ingest_router)
+
+# Impressum / privacy, also at the root: a legal notice reachable only under a
+# dashboard prefix is not reachable. Both 404 unless the operator has published
+# the corresponding file.
+app.include_router(legal_router)

@@ -53,6 +53,9 @@ class Settings:
         # §26). Set it to "" to put the dashboard back at the domain root — the
         # main page is then not served at all, since the two would collide.
         self.root_path = _env("ROOT_PATH", "/dashboard").rstrip("/")
+        # Where the operator's Impressum / privacy fragments live. Deliberately
+        # outside version control: see app/legal.py.
+        self.legal_dir = _env("LEGAL_DIR", "app/legal")
 
         # Where users should report problems. Shown on the main page; hidden
         # when empty.

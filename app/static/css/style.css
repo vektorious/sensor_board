@@ -322,3 +322,16 @@ code {
 
 /* Expiry warning on a device page (§17): amber once the window is nearly up. */
 .expiry-warning { color: var(--warning); }
+
+/* Legal footer. Present only on instances that have published the pages, so it
+   must not reserve space when absent. */
+.site-footer {
+  max-width: 1100px; margin: 48px auto 24px; padding: 16px 20px 0;
+  border-top: 1px solid var(--border); display: flex; gap: 20px;
+  font-size: 0.85rem;
+}
+.site-footer a { color: var(--text-muted); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.legal-body { max-width: 46rem; line-height: 1.6; }
+.legal-body h2 { font-size: 1rem; margin-top: 28px; }
+.legal-body p, .legal-body li { color: var(--text-secondary); }

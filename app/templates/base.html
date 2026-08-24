@@ -15,6 +15,16 @@
   <main class="container">
     {% block content %}{% endblock %}
   </main>
+  {% block footer %}
+    {% set legal = legal_pages() %}
+    {% if legal %}
+      <footer class="site-footer">
+        {% for slug, title in legal.items() %}
+          <a href="/{{ slug }}">{{ title }}</a>
+        {% endfor %}
+      </footer>
+    {% endif %}
+  {% endblock %}
   {% block scripts %}{% endblock %}
 </body>
 </html>
