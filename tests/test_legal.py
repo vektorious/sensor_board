@@ -56,6 +56,18 @@ def test_published_page_is_served_and_linked(legal_dir):
     assert client.get("/privacy").status_code == 404
 
 
+def test_root_paths_are_not_swallowed(legal_dir):
+    """A "/{slug}" catch-all at the root broke /dashboard.
+
+    It matched before FastAPI could redirect to /dashboard/, so the trailing
+    slash a person leaves off turned a working URL into a 404. Only exact legal
+    paths may be registered at the root.
+    """
+    r = client.get("/dashboard", follow_redirects=False)
+    assert r.status_code in (200, 307, 308), r.status_code
+    assert client.get("/dashboard/").status_code == 200
+
+
 def test_unknown_slug_is_not_served(legal_dir):
     """The slug becomes a filename, so only the known set may reach the disk."""
     (legal_dir / "agb.html").write_text("<p>nope</p>", encoding="utf-8")

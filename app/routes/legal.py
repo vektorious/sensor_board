@@ -16,13 +16,10 @@ templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["legal_pages"] = legal.available
 
 
-@router.get("/{slug}", response_class=HTMLResponse)
-def legal_page(request: Request, slug: str):
-    if slug not in legal.PAGES:
-        raise HTTPException(status_code=404)
+def _render(request: Request, slug: str) -> HTMLResponse:
     body = legal.render(slug)
     if body is None:
-        # The slug is known but this instance has not published that page.
+        # Known slug, but this instance has not published that page.
         raise HTTPException(status_code=404)
     return templates.TemplateResponse(
         request,
@@ -36,4 +33,24 @@ def legal_page(request: Request, slug: str):
             "heading": legal.PAGES[slug],
             "body": body,
         },
+    )
+
+
+def _endpoint(slug: str):
+    def handler(request: Request):
+        return _render(request, slug)
+    return handler
+
+
+# One exact route per known page, NOT "/{slug}". A path parameter at the site
+# root is a catch-all: it matches "/dashboard" too, which stops FastAPI issuing
+# its redirect to "/dashboard/" and turns a working URL into a 404. The routes
+# are generated from PAGES so that dict stays the single source of truth.
+for _slug in legal.PAGES:
+    router.add_api_route(
+        f"/{_slug}",
+        _endpoint(_slug),
+        methods=["GET"],
+        response_class=HTMLResponse,
+        name=f"legal_{_slug}",
     )
